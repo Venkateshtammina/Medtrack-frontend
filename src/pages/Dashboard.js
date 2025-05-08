@@ -1,7 +1,7 @@
 import { saveAs } from "file-saver";
 import { unparse } from "papaparse";
 import React, { useEffect, useState, useCallback } from "react";
-import axios from "axios";
+import api from "../config/api";
 import MedicineForm from "../components/MedicineForm";
 import MedicineList from "../components/MedicineList";
 import InventoryLogs from "../components/InventoryLogs";
@@ -23,9 +23,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get("/api/auth/me");
         setUser(res.data);
       } catch (err) {
         // If unauthorized, force logout
@@ -38,16 +36,14 @@ const Dashboard = () => {
 
   const fetchMedicines = useCallback(async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/medicines", {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await api.get("/api/medicines");
       setMedicines(res.data);
     } catch (err) {
       if (err.response?.status === 401) {
         navigate("/login");
       }
     }
-  }, [token, navigate]);
+  }, [navigate]);
 
   useEffect(() => {
     if (token) fetchMedicines();

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../config/api";
 import { useNavigate } from "react-router-dom";
 
 const InventoryLogs = () => {
@@ -16,7 +16,7 @@ const InventoryLogs = () => {
   useEffect(() => {
     const fetchLogs = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/inventory-logs", {
+        const res = await api.get("/api/inventory-logs", {
           headers: { Authorization: `Bearer ${token}` },
         });
         setLogs(res.data);

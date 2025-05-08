@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../config/api";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -15,7 +15,7 @@ const MedicineList = ({ medicines, onDelete, onUpdate }) => {
 
   const handleDelete = async (id) => {
     try {
-      await axios.delete(`http://localhost:5000/api/medicines/${id}`);
+      await api.delete(`/api/medicines/${id}`);
       onDelete(id);
     } catch (err) {
       alert("Failed to delete medicine ❌");
@@ -38,10 +38,7 @@ const MedicineList = ({ medicines, onDelete, onUpdate }) => {
 
   const handleEditSave = async (id) => {
     try {
-      const res = await axios.put(
-        `http://localhost:5000/api/medicines/${id}`,
-        editedMedicine
-      );
+      const res = await api.put(`/api/medicines/${id}`, editedMedicine);
       onUpdate(res.data);
       setEditingId(null);
     } catch (err) {

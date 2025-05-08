@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../config/api";
 
 const MedicineForm = ({ onMedicineAdded }) => {
   const [name, setName] = useState("");
@@ -17,19 +17,11 @@ const MedicineForm = ({ onMedicineAdded }) => {
         return;
       }
 
-      const res = await axios.post(
-        "http://localhost:5000/api/medicines",
-        {
-          name,
-          quantity: parseInt(quantity),
-          expiryDate,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const res = await api.post("/api/medicines", {
+        name,
+        quantity: parseInt(quantity),
+        expiryDate,
+      });
       onMedicineAdded(res.data);
       setName("");
       setQuantity("");

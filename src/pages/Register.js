@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import axios from "axios";
+import api from "../config/api";
 import { useNavigate, Link } from "react-router-dom";
 
 const Register = () => {
@@ -14,7 +14,7 @@ const Register = () => {
     e.preventDefault();
     setMessage("");
     try {
-      await axios.post("http://localhost:5000/api/auth/request-otp", { email: form.email });
+      await api.post("/api/auth/request-otp", { email: form.email });
       setMessage("OTP sent to your email.");
       setStep(2);
     } catch (err) {
@@ -26,7 +26,7 @@ const Register = () => {
     e.preventDefault();
     setMessage("");
     try {
-      await axios.post("http://localhost:5000/api/auth/register", form);
+      await api.post("/api/auth/register", form);
       setMessage("Registration successful! You can now log in.");
       setStep(1);
       setForm({ name: "", email: "", password: "", otp: "" });
