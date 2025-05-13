@@ -68,15 +68,6 @@ const Register = () => {
             {step === 1 ? (
               <Box component="form" onSubmit={handleRequestOtp} width="100%">
                 <TextField
-                  name="name"
-                  label="Full Name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
                   name="email"
                   label="Email"
                   value={form.email}
@@ -85,17 +76,6 @@ const Register = () => {
                   fullWidth
                   margin="normal"
                   autoComplete="email"
-                />
-                <TextField
-                  name="password"
-                  type="password"
-                  label="Password"
-                  value={form.password}
-                  onChange={handleChange}
-                  required
-                  fullWidth
-                  margin="normal"
-                  autoComplete="new-password"
                 />
                 <Button
                   type="submit"
@@ -139,6 +119,7 @@ const Register = () => {
                   fullWidth
                   margin="normal"
                   autoComplete="email"
+                  disabled
                 />
                 <TextField
                   name="password"
