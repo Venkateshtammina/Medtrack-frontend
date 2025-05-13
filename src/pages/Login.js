@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import api from "../config/api";
 import { useNavigate, Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Box,
+  Stack
+} from "@mui/material";
+import LockIcon from "@mui/icons-material/Lock";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -21,105 +32,79 @@ const Login = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>🔐 Login to MedTrack</h2>
-        {message && <div style={styles.error}>{message}</div>}
-        <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            required
-            style={styles.input}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            required
-            style={styles.input}
-          />
-          <button type="submit" style={styles.button}>Login</button>
-        </form>
-        <div style={styles.links}>
-          <Link to="/register" style={styles.link}>New user? Register</Link>
-          <Link to="/forgot-password" style={styles.link}>Forgot Password?</Link>
-        </div>
-      </div>
-    </div>
+    <Box
+      minHeight="100vh"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      sx={{
+        background: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
+      }}
+    >
+      <Card sx={{ maxWidth: 400, width: "100%", borderRadius: 3, boxShadow: 6 }}>
+        <CardContent>
+          <Stack alignItems="center" spacing={2}>
+            <LockIcon sx={{ fontSize: 48, color: "#185a9d" }} />
+            <Typography variant="h5" fontWeight={700} color="#185a9d">
+              Login to MedTrack
+            </Typography>
+            {message && <Alert severity="error">{message}</Alert>}
+            <Box component="form" onSubmit={handleLogin} width="100%">
+              <TextField
+                label="Email"
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                fullWidth
+                margin="normal"
+                autoComplete="email"
+              />
+              <TextField
+                label="Password"
+                type="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                fullWidth
+                margin="normal"
+                autoComplete="current-password"
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                sx={{
+                  mt: 2,
+                  background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
+                  color: "#fff",
+                  fontWeight: 600,
+                  fontSize: "1.1rem",
+                  boxShadow: 2,
+                  borderRadius: 2,
+                  textTransform: "none",
+                  '&:hover': {
+                    background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
+                  }
+                }}
+              >
+                Login
+              </Button>
+            </Box>
+            <Box width="100%" display="flex" flexDirection="column" alignItems="center" gap={1} mt={2}>
+              <Typography variant="body2">
+                New user? <Link to="/register" style={{ color: "#185a9d", textDecoration: "none", fontWeight: 500 }}>Register</Link>
+              </Typography>
+              <Typography variant="body2">
+                <Link to="/forgot-password" style={{ color: "#185a9d", textDecoration: "none", fontWeight: 500 }}>Forgot Password?</Link>
+              </Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  card: {
-    background: "#fff",
-    padding: "2.5rem 2rem",
-    borderRadius: "16px",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-    width: "100%",
-    maxWidth: "400px",
-    textAlign: "center",
-  },
-  title: {
-    marginBottom: "1.5rem",
-    color: "#185a9d",
-    fontWeight: 700,
-    fontSize: "2rem",
-    letterSpacing: "1px",
-  },
-  input: {
-    width: "100%",
-    padding: "0.9rem",
-    margin: "0.5rem 0",
-    borderRadius: "8px",
-    border: "1px solid #bdbdbd",
-    fontSize: "1rem",
-    outline: "none",
-    transition: "border 0.2s",
-  },
-  button: {
-    width: "100%",
-    padding: "0.9rem",
-    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontWeight: 600,
-    fontSize: "1.1rem",
-    marginTop: "1rem",
-    cursor: "pointer",
-    transition: "background 0.2s",
-  },
-  error: {
-    color: "#d32f2f",
-    background: "#ffebee",
-    borderRadius: "6px",
-    padding: "0.7rem",
-    marginBottom: "1rem",
-  },
-  links: {
-    marginTop: "1.5rem",
-    display: "flex",
-    flexDirection: "column",
-    gap: "0.5rem",
-  },
-  link: {
-    color: "#185a9d",
-    textDecoration: "none",
-    fontWeight: 500,
-    fontSize: "1rem",
-    transition: "color 0.2s",
-  },
 };
 
 export default Login;
