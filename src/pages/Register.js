@@ -1,6 +1,17 @@
 import React, { useState } from "react";
 import api from "../config/api";
 import { useNavigate, Link } from "react-router-dom";
+import {
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  Alert,
+  Box,
+  Stack
+} from "@mui/material";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -37,146 +48,149 @@ const Register = () => {
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
-        <h2 style={styles.title}>📝 Register for MedTrack</h2>
-        {message && <div style={styles.error}>{message}</div>}
-        {step === 1 ? (
-          <form onSubmit={handleRequestOtp}>
-            <input
-              name="name"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <input
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <button type="submit" style={styles.button}>Send OTP</button>
-          </form>
-        ) : (
-          <form onSubmit={handleRegister}>
-            <input
-              name="name"
-              placeholder="Full Name"
-              value={form.name}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <input
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <input
-              name="password"
-              type="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <input
-              name="otp"
-              placeholder="Enter OTP"
-              value={form.otp}
-              onChange={handleChange}
-              required
-              style={styles.input}
-            />
-            <button type="submit" style={styles.button}>Register</button>
-          </form>
-        )}
-        <p style={{ textAlign: "center", marginTop: "1rem" }}>
-          Already have an account? <Link to="/login" style={styles.link}>Login</Link>
-        </p>
-      </div>
-    </div>
+    <Box
+      minHeight="100vh"
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      sx={{
+        background: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
+      }}
+    >
+      <Card sx={{ maxWidth: 400, width: "100%", borderRadius: 3, boxShadow: 6 }}>
+        <CardContent>
+          <Stack alignItems="center" spacing={2}>
+            <PersonAddIcon sx={{ fontSize: 48, color: "#185a9d" }} />
+            <Typography variant="h5" fontWeight={700} color="#185a9d">
+              Register for MedTrack
+            </Typography>
+            {message && <Alert severity={message.includes("success") ? "success" : "error"}>{message}</Alert>}
+            {step === 1 ? (
+              <Box component="form" onSubmit={handleRequestOtp} width="100%">
+                <TextField
+                  name="name"
+                  label="Full Name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  name="email"
+                  label="Email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                  autoComplete="email"
+                />
+                <TextField
+                  name="password"
+                  type="password"
+                  label="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                  autoComplete="new-password"
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  sx={{
+                    mt: 2,
+                    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "1.1rem",
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
+                    }
+                  }}
+                >
+                  Send OTP
+                </Button>
+              </Box>
+            ) : (
+              <Box component="form" onSubmit={handleRegister} width="100%">
+                <TextField
+                  name="name"
+                  label="Full Name"
+                  value={form.name}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                />
+                <TextField
+                  name="email"
+                  label="Email"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                  autoComplete="email"
+                />
+                <TextField
+                  name="password"
+                  type="password"
+                  label="Password"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                  autoComplete="new-password"
+                />
+                <TextField
+                  name="otp"
+                  label="Enter OTP"
+                  value={form.otp}
+                  onChange={handleChange}
+                  required
+                  fullWidth
+                  margin="normal"
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  sx={{
+                    mt: 2,
+                    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
+                    color: "#fff",
+                    fontWeight: 600,
+                    fontSize: "1.1rem",
+                    boxShadow: 2,
+                    borderRadius: 2,
+                    textTransform: "none",
+                    '&:hover': {
+                      background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
+                    }
+                  }}
+                >
+                  Register
+                </Button>
+              </Box>
+            )}
+            <Typography variant="body2" sx={{ textAlign: "center", mt: 2 }}>
+              Already have an account? <Link to="/login" style={{ color: "#185a9d", textDecoration: "none", fontWeight: 500 }}>Login</Link>
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
+    </Box>
   );
-};
-
-const styles = {
-  container: {
-    minHeight: "100vh",
-    background: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  card: {
-    background: "#fff",
-    padding: "2.5rem 2rem",
-    borderRadius: "16px",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-    width: "100%",
-    maxWidth: "400px",
-    textAlign: "center",
-  },
-  title: {
-    marginBottom: "1.5rem",
-    color: "#185a9d",
-    fontWeight: 700,
-    fontSize: "2rem",
-    letterSpacing: "1px",
-  },
-  input: {
-    width: "100%",
-    padding: "0.9rem",
-    margin: "0.5rem 0",
-    borderRadius: "8px",
-    border: "1px solid #bdbdbd",
-    fontSize: "1rem",
-    outline: "none",
-    transition: "border 0.2s",
-  },
-  button: {
-    width: "100%",
-    padding: "0.9rem",
-    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
-    color: "#fff",
-    border: "none",
-    borderRadius: "8px",
-    fontWeight: 600,
-    fontSize: "1.1rem",
-    marginTop: "1rem",
-    cursor: "pointer",
-    transition: "background 0.2s",
-  },
-  error: {
-    color: "#d32f2f",
-    background: "#ffebee",
-    borderRadius: "6px",
-    padding: "0.7rem",
-    marginBottom: "1rem",
-  },
-  link: {
-    color: "#185a9d",
-    textDecoration: "none",
-    fontWeight: 500,
-    fontSize: "1rem",
-    transition: "color 0.2s",
-  },
 };
 
 export default Register;
