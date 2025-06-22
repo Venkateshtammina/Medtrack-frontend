@@ -1,153 +1,264 @@
 import React, { useState } from "react";
-import api from "../config/api";
+import {
+  TextField,
+  Button,
+  Box,
+  InputAdornment,
+  IconButton,
+  Typography,
+  Paper,
+} from "@mui/material";
+import QrCodeIcon from "@mui/icons-material/QrCode";
+import AddIcon from "@mui/icons-material/Add";
+import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 
-const MedicineForm = ({ onMedicineAdded }) => {
-  const [name, setName] = useState("");
-  const [quantity, setQuantity] = useState("");
-  const [expiryDate, setExpiryDate] = useState("");
+const MedicineForm = ({ onAddMedicine }) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    quantity: "",
+    price: "",
+    expiryDate: null,
+    manufacturer: "",
+    barcode: "",
+  });
+
   const [error, setError] = useState("");
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleDateChange = (date) => {
+    setFormData((prev) => ({ ...prev, expiryDate: date }));
+  };
+
+  const generateBarcode = () => {
+    // Generate a 12-digit barcode
+    const barcode = "MED" + Math.floor(100000000 + Math.random() * 900000000).toString();
+    setFormData((prev) => ({ ...prev, barcode }));
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    // Basic validation
+    if (!formData.name || !formData.quantity || !formData.expiryDate) {
+      setError("Please fill in all required fields");
+      return;
+    }
+
     try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        setError("Please login to add medicines");
-        return;
+      // Send data to backend
+      const response = await fetch("/api/medicines", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to add medicine");
       }
 
-      const res = await api.post("/api/medicines", {
-        name,
-        quantity: parseInt(quantity),
-        expiryDate,
+      // Call the callback with the new medicine
+      onAddMedicine(data);
+      
+      // Reset form
+      setFormData({
+        name: "",
+        description: "",
+        quantity: "",
+        price: "",
+        expiryDate: null,
+        manufacturer: "",
+        barcode: "",
       });
-      onMedicineAdded(res.data);
-      setName("");
-      setQuantity("");
-      setExpiryDate("");
     } catch (err) {
+      setError(err.message || "An error occurred while adding the medicine");
       console.error("Error adding medicine:", err);
-      setError(err.response?.data?.error || "Error adding medicine ❌");
     }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        backgroundColor: "#fff",
-        padding: "22px",
-        borderRadius: "8px",
-        boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-        maxWidth: "700px",
-        margin: "0 auto",
+    <Paper
+      elevation={3}
+      sx={{
+        padding: 3,
+        borderRadius: 2,
+        background: "white",
+        boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
       }}
     >
-      <h2
-        style={{
-          textAlign: "center",
-          color: "#333",
-          fontFamily: "'Roboto', sans-serif",
-          fontSize: "1.8rem",
-          marginBottom: "20px",
+      <Typography
+        variant="h5"
+        component="h2"
+        sx={{
+          color: "#2c3e50",
+          fontWeight: 600,
+          marginBottom: 3,
+          paddingBottom: 1,
+          borderBottom: "2px solid #f0f2f5",
         }}
       >
         Add New Medicine
-      </h2>
+      </Typography>
+      
       {error && (
-        <div
-          style={{
-            color: "#d32f2f",
+        <Box
+          sx={{
             backgroundColor: "#ffebee",
-            padding: "10px",
-            borderRadius: "4px",
-            marginBottom: "15px",
-            textAlign: "center",
+            color: "#d32f2f",
+            padding: 2,
+            borderRadius: 1,
+            marginBottom: 3,
           }}
         >
           {error}
-        </div>
+        </Box>
       )}
-      <div style={{ marginBottom: "15px" }}>
-        <input
-          type="text"
-          placeholder="Medicine Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          required
-          style={{
-            width: "95%",
-            padding: "12px 15px",
-            fontSize: "1rem",
-            borderRadius: "8px",
-            border: "2px solid #4CAF50",
-            marginBottom: "10px",
-            outline: "none",
-            transition: "all 0.3s ease",
-          }}
-        />
-      </div>
 
-      <div style={{ marginBottom: "15px" }}>
-        <input
-          type="number"
-          placeholder="Quantity"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          required
-          min="1"
-          style={{
-            width: "95%",
-            padding: "12px 15px",
-            fontSize: "1rem",
-            borderRadius: "8px",
-            border: "2px solid #4CAF50",
-            marginBottom: "10px",
-            outline: "none",
-            transition: "all 0.3s ease",
+      <Box component="form" onSubmit={handleSubmit} noValidate>
+        <Box
+          sx={{
+            display: "grid",
+            gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+            gap: 3,
+            marginBottom: 3,
           }}
-        />
-      </div>
+        >
+          <TextField
+            required
+            fullWidth
+            label="Medicine Name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+          />
+          
+          <TextField
+            fullWidth
+            label="Description"
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+            multiline
+            rows={1}
+          />
 
-      <div style={{ marginBottom: "20px" }}>
-        <input
-          type="date"
-          value={expiryDate}
-          onChange={(e) => setExpiryDate(e.target.value)}
-          required
-          min={new Date().toISOString().split("T")[0]}
-          style={{
-            width: "95%",
-            padding: "12px 15px",
-            fontSize: "1rem",
-            borderRadius: "8px",
-            border: "2px solid #4CAF50",
-            outline: "none",
-            transition: "all 0.3s ease",
-          }}
-        />
-      </div>
+          <TextField
+            required
+            fullWidth
+            type="number"
+            label="Quantity"
+            name="quantity"
+            value={formData.quantity}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+            inputProps={{ min: 1 }}
+          />
 
-      <button
-        type="submit"
-        style={{
-          backgroundColor: "#4CAF50",
-          color: "#fff",
-          padding: "12px 20px",
-          fontSize: "1rem",
-          borderRadius: "8px",
-          border: "none",
-          cursor: "pointer",
-          width: "100%",
-          transition: "background-color 0.3s ease",
-        }}
-        onMouseEnter={(e) => (e.target.style.backgroundColor = "#388E3C")}
-        onMouseLeave={(e) => (e.target.style.backgroundColor = "#4CAF50")}
-      >
-        Add Medicine
-      </button>
-    </form>
+          <TextField
+            fullWidth
+            type="number"
+            label="Price (₹)"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+            inputProps={{ step: "0.01", min: 0 }}
+            InputProps={{
+              startAdornment: <InputAdornment position="start">₹</InputAdornment>,
+            }}
+          />
+
+          <LocalizationProvider dateAdapter={AdapterDateFns}>
+            <DatePicker
+              label="Expiry Date *"
+              value={formData.expiryDate}
+              onChange={handleDateChange}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  fullWidth
+                  size="small"
+                  required
+                  variant="outlined"
+                />
+              )}
+            />
+          </LocalizationProvider>
+
+          <TextField
+            fullWidth
+            label="Manufacturer"
+            name="manufacturer"
+            value={formData.manufacturer}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+          />
+
+          <TextField
+            fullWidth
+            label="Barcode"
+            name="barcode"
+            value={formData.barcode}
+            onChange={handleChange}
+            variant="outlined"
+            size="small"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={generateBarcode}
+                    edge="end"
+                    aria-label="generate barcode"
+                  >
+                    <QrCodeIcon />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            helperText="Click the QR code icon to generate a barcode"
+          />
+        </Box>
+
+        <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            startIcon={<AddIcon />}
+            sx={{
+              textTransform: "none",
+              fontWeight: 600,
+              padding: "8px 24px",
+              borderRadius: 2,
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+              "&:hover": {
+                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
+              },
+            }}
+          >
+            Add Medicine
+          </Button>
+        </Box>
+      </Box>
+    </Paper>
   );
 };
 

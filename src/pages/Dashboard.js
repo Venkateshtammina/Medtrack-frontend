@@ -5,6 +5,7 @@ import api from "../config/api";
 import MedicineForm from "../components/MedicineForm";
 import MedicineList from "../components/MedicineList";
 import InventoryLogs from "../components/InventoryLogs";
+import BarcodeScanner from "../components/BarcodeScanner";
 import { useNavigate } from "react-router-dom";
 import {
   Box,
@@ -14,15 +15,19 @@ import {
   Button,
   Avatar,
   Stack,
-  Divider
+  Divider,
+  IconButton,
+  Tooltip
 } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import DownloadIcon from "@mui/icons-material/Download";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 
 const Dashboard = () => {
   const [medicines, setMedicines] = useState([]);
   const [user, setUser] = useState(null);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
 
@@ -68,6 +73,22 @@ const Dashboard = () => {
     prev.map((med) => (med._id === updatedMed._id ? updatedMed : med))
   );
 
+  const handleScanComplete = async (barcode) => {
+    try {
+      const response = await api.get(`/api/medicines/barcode/${barcode}`);
+      if (response.data) {
+        // If medicine found, you can show a message or pre-fill a form
+        alert(`Found medicine: ${response.data.name}`);
+      } else {
+        // If no medicine found, you can create a new one
+        alert(`No medicine found with barcode: ${barcode}`);
+        // You could open the MedicineForm with the barcode pre-filled
+      }
+    } catch (error) {
+      console.error('Error searching for medicine:', error);
+    }
+  };
+
   const exportToCSV = () => {
     if (medicines.length === 0) {
       alert("No medicines to export.");
@@ -96,27 +117,70 @@ const Dashboard = () => {
     <Box minHeight="100vh" sx={{ background: "linear-gradient(120deg, #f8fafc 0%, #e0e7ef 100%)" }}>
       <Box display="flex" flexDirection={{ xs: "column", md: "row" }} maxWidth="1400px" mx="auto" py={4} px={{ xs: 1, md: 4 }} gap={4} minHeight="100vh">
         {/* Sidebar */}
-        <Card sx={{ flex: "0 0 220px", minWidth: 180, maxWidth: 240, borderRadius: 3, boxShadow: 6, p: 2, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "space-between", height: { md: "calc(100vh - 4rem)" }, position: { md: "sticky" }, top: { md: 32 }, mb: { xs: 2, md: 0 } }}>
+        <Card sx={{ 
+          flex: "0 0 220px", 
+          minWidth: 180, 
+          maxWidth: 240, 
+          borderRadius: 3, 
+          boxShadow: 6, 
+          p: 2, 
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center", 
+          justifyContent: "space-between", 
+          height: { md: "calc(100vh - 4rem)" }, 
+          position: { md: "sticky" }, 
+          top: { md: 32 }, 
+          mb: { xs: 2, md: 0 } 
+        }}>
           {user && (
             <>
-              <Stack alignItems="center" spacing={1} width="100%">
-                <Avatar sx={{ width: 56, height: 56, bgcolor: "#185a9d", fontWeight: 700, fontSize: 24 }}>
-                  {user.name
-                    ? user.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                    : "U"}
+              <Box textAlign="center">
+                <Avatar
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    bgcolor: "primary.main",
+                    mb: 2,
+                    mx: "auto",
+                    fontSize: 32,
+                    fontWeight: "bold",
+                    boxShadow: 3,
+                  }}
+                >
+                  {user.name.charAt(0).toUpperCase()}
                 </Avatar>
-                <Typography fontWeight={600} color="#185a9d" fontSize={18} textAlign="center">
+                <Typography variant="h6" fontWeight="bold" color="text.primary">
                   {user.name}
                 </Typography>
                 <Typography fontSize={15} color="#555" textAlign="center">
                   {user.email}
                 </Typography>
-              </Stack>
+              </Box>
               <Divider sx={{ my: 2, width: "100%" }} />
+              
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<QrCodeScannerIcon />}
+                onClick={() => setScannerOpen(true)}
+                fullWidth
+                sx={{ mb: 2, borderRadius: 2, boxShadow: 2, textTransform: "none" }}
+              >
+                Scan Barcode
+              </Button>
+
+              <Button
+                onClick={exportToCSV}
+                variant="contained"
+                color="secondary"
+                startIcon={<DownloadIcon />}
+                fullWidth
+                sx={{ mb: 2, borderRadius: 2, boxShadow: 2, textTransform: "none" }}
+              >
+                Export CSV
+              </Button>
+
               <Button
                 onClick={handleLogout}
                 variant="contained"
@@ -130,52 +194,59 @@ const Dashboard = () => {
             </>
           )}
         </Card>
+
         {/* Main Content */}
-        <Box flex={3} display="flex" flexDirection="column" gap={3}>
-          <Stack direction="row" alignItems="center" gap={1} mb={2}>
-            <LocalHospitalIcon sx={{ color: "#185a9d", fontSize: 36 }} />
-            <Typography variant="h4" fontWeight={700} color="#185a9d">
-              MedTrack
+        <Box flex={1} display="flex" flexDirection="column" gap={3}>
+          <Box display="flex" justifyContent="space-between" alignItems="center">
+            <Typography variant="h4" fontWeight="bold" color="primary.main">
+              Medicine Inventory
             </Typography>
-          </Stack>
-          <Button
-            onClick={exportToCSV}
-            variant="contained"
-            startIcon={<DownloadIcon />}
-            sx={{
-              width: "fit-content",
-              mb: 2,
-              background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
-              color: "#fff",
-              fontWeight: 600,
-              fontSize: "1rem",
-              borderRadius: 2,
-              boxShadow: 2,
-              textTransform: "none",
-              '&:hover': {
-                background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
-              }
-            }}
-          >
-            Export All to CSV
-          </Button>
-          <Stack direction={{ xs: "column", md: "row" }} gap={3}>
-            <Card sx={{ flex: 1, borderRadius: 3, boxShadow: 3, p: 2 }}>
-              <MedicineForm onMedicineAdded={addMedicine} />
-            </Card>
-            <Card sx={{ flex: 2, borderRadius: 3, boxShadow: 3, p: 2 }}>
-              <MedicineList
-                medicines={medicines}
-                onDelete={deleteMedicine}
-                onUpdate={updateMedicine}
-              />
-            </Card>
-            <Card sx={{ flex: 1, borderRadius: 3, boxShadow: 3, p: 2 }}>
-              <InventoryLogs />
-            </Card>
-          </Stack>
+            <Tooltip title="Scan Barcode">
+              <IconButton 
+                color="primary" 
+                onClick={() => setScannerOpen(true)}
+                sx={{ 
+                  display: { xs: 'flex', md: 'none' },
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  '&:hover': {
+                    bgcolor: 'primary.dark'
+                  }
+                }}
+              >
+                <QrCodeScannerIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+
+          <MedicineForm onAddMedicine={addMedicine} />
+
+          <Box>
+            <Typography variant="h6" gutterBottom>
+              Your Medicines
+            </Typography>
+            <MedicineList
+              medicines={medicines}
+              onDelete={deleteMedicine}
+              onUpdate={updateMedicine}
+            />
+          </Box>
+
+          <Box mt={4}>
+            <Typography variant="h6" gutterBottom>
+              Inventory Logs
+            </Typography>
+            <InventoryLogs />
+          </Box>
         </Box>
       </Box>
+
+      {/* Barcode Scanner Dialog */}
+      <BarcodeScanner 
+        open={scannerOpen} 
+        onClose={() => setScannerOpen(false)} 
+        onScan={handleScanComplete} 
+      />
     </Box>
   );
 };
