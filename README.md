@@ -3,6 +3,12 @@
 MedTrack is a full-stack medicine inventory management system designed for clinics, pharmacies, and hospitals. It provides secure user authentication, medicine tracking, expiry notifications, and inventory logs.
 
 ---
+## 🚀 Live Demo
+
+[https://medtrack-frontend.onrender.com](https://medtrack-frontend.onrender.com)
+
+---
+
 
 ## Features
 
