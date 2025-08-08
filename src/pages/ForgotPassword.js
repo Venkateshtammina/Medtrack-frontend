@@ -1,154 +1,256 @@
-import React, { useState } from "react";
-import api from "../config/api";
-import { Link } from "react-router-dom";
-import {
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  Alert,
-  Box,
-  Stack
-} from "@mui/material";
-import EmailIcon from "@mui/icons-material/Email";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { motion } from 'framer-motion';
+import { Link, useNavigate } from 'react-router-dom';
+import { Box, Typography, Alert, useTheme, Button } from '@mui/material';
+import { Email as EmailIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import AuthLayout from '../components/auth/AuthLayout';
+import FormInput from '../components/auth/FormInput';
+import LoadingButton from '../components/auth/LoadingButton';
+import api from '../config/api';
 
 const ForgotPassword = () => {
-  const [step, setStep] = useState(1);
-  const [email, setEmail] = useState("");
-  const [otp, setOtp] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+  const [otpSent, setOtpSent] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const navigate = useNavigate();
+  const theme = useTheme();
 
-  const handleRequestOtp = async (e) => {
-    e.preventDefault();
+  const { 
+    register, 
+    handleSubmit, 
+    formState: { errors },
+    watch
+  } = useForm({
+    mode: 'onChange',
+    defaultValues: {
+      email: '',
+      otp: '',
+      newPassword: ''
+    }
+  });
+
+  const handleRequestOtp = async (data) => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    
     try {
-      const res = await api.post("/api/auth/forgot-password", { email });
-      setMessage(res.data.message);
-      setStep(2);
+      await api.post('/api/auth/forgot-password', { 
+        email: data.email.toLowerCase().trim() 
+      });
+      
+      setResetEmail(data.email.toLowerCase().trim());
+      setOtpSent(true);
+      setMessage({ 
+        type: 'success', 
+        text: 'A 6-digit OTP has been sent to your email. Please enter it below.' 
+      });
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong.");
+      const errorMessage = err.response?.data?.message || 'Failed to send OTP';
+      setMessage({ type: 'error', text: errorMessage });
+    } finally {
+      setLoading(false);
     }
   };
-
-  const handleResetPassword = async (e) => {
-    e.preventDefault();
+  
+  const handleVerifyOtp = async (data) => {
+    setLoading(true);
+    setMessage({ type: '', text: '' });
+    
     try {
-      const res = await api.post("/api/auth/reset-password-with-otp", { email, otp, newPassword });
-      setMessage(res.data.message);
-      setStep(1);
-      setEmail("");
-      setOtp("");
-      setNewPassword("");
+      // First, verify OTP and reset password in one step
+      const response = await api.post('/api/auth/reset-password-with-otp', {
+        email: resetEmail,
+        otp: data.otp,
+        newPassword: data.newPassword
+      });
+      
+      // If successful, show success message and redirect to login
+      setMessage({ 
+        type: 'success', 
+        text: 'Password reset successful! Redirecting to login...' 
+      });
+      
+      // Redirect to login after a short delay
+      setTimeout(() => {
+        navigate('/login', { 
+          state: { 
+            passwordResetSuccess: true,
+            email: resetEmail
+          } 
+        });
+      }, 2000);
     } catch (err) {
-      setMessage(err.response?.data?.message || "Something went wrong.");
+      console.error('Password reset error:', err);
+      const errorMessage = err.response?.data?.message || 'Invalid OTP or error resetting password. Please try again.';
+      setMessage({ 
+        type: 'error', 
+        text: errorMessage,
+        details: err.response?.data?.details
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Box
-      minHeight="100vh"
-      display="flex"
-      alignItems="center"
-      justifyContent="center"
-      sx={{
-        background: "linear-gradient(135deg, #43cea2 0%, #185a9d 100%)",
-      }}
+    <AuthLayout
+      title="Forgot Password"
+      subtitle="Enter your email to reset your password"
+      icon={EmailIcon}
     >
-      <Card sx={{ maxWidth: 400, width: "100%", borderRadius: 3, boxShadow: 6 }}>
-        <CardContent>
-          <Stack alignItems="center" spacing={2}>
-            {step === 1 ? <EmailIcon sx={{ fontSize: 48, color: "#185a9d" }} /> : <VpnKeyIcon sx={{ fontSize: 48, color: "#185a9d" }} />}
-            <Typography variant="h5" fontWeight={700} color="#185a9d">
-              Forgot Password
+      <Box sx={{ width: '100%' }}>
+        {message.text && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+          >
+            <Alert 
+              severity={message.type}
+              sx={{ 
+                mb: 3, 
+                borderRadius: 2,
+                '& .MuiAlert-message': {
+                  width: '100%'
+                }
+              }}
+            >
+              {message.text}
+            </Alert>
+          </motion.div>
+        )}
+
+        {!otpSent ? (
+          <form onSubmit={handleSubmit(handleRequestOtp)}>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              Enter your email address and we'll send you a one-time password (OTP) to reset your password.
             </Typography>
-            {message && <Alert severity={message.includes("success") ? "success" : "error"}>{message}</Alert>}
-            {step === 1 ? (
-              <Box component="form" onSubmit={handleRequestOtp} width="100%">
-                <TextField
-                  type="email"
-                  label="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  fullWidth
-                  margin="normal"
-                  autoComplete="email"
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  sx={{
-                    mt: 2,
-                    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
-                    color: "#fff",
-                    fontWeight: 600,
-                    fontSize: "1.1rem",
-                    boxShadow: 2,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    '&:hover': {
-                      background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
-                    }
-                  }}
-                >
-                  Send OTP
-                </Button>
-              </Box>
-            ) : (
-              <Box component="form" onSubmit={handleResetPassword} width="100%">
-                <TextField
-                  type="text"
-                  label="Enter OTP"
-                  value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
-                  required
-                  fullWidth
-                  margin="normal"
-                />
-                <TextField
-                  type="password"
-                  label="New Password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  fullWidth
-                  margin="normal"
-                  autoComplete="new-password"
-                />
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  size="large"
-                  sx={{
-                    mt: 2,
-                    background: "linear-gradient(90deg, #43cea2 0%, #185a9d 100%)",
-                    color: "#fff",
-                    fontWeight: 600,
-                    fontSize: "1.1rem",
-                    boxShadow: 2,
-                    borderRadius: 2,
-                    textTransform: "none",
-                    '&:hover': {
-                      background: "linear-gradient(90deg, #185a9d 0%, #43cea2 100%)"
-                    }
-                  }}
-                >
-                  Reset Password
-                </Button>
-              </Box>
-            )}
-            <Typography variant="body2" sx={{ textAlign: "center", mt: 2 }}>
-              <Link to="/login" style={{ color: "#185a9d", textDecoration: "none", fontWeight: 500 }}>Back to Login</Link>
+            
+            <FormInput
+              name="email"
+              label="Email Address"
+              type="email"
+              autoComplete="email"
+              error={!!errors.email}
+              helperText={errors.email?.message}
+              startAdornment={
+                <EmailIcon color="action" />
+              }
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address'
+                }
+              })}
+            />
+            
+            <Box sx={{ mt: 3 }}>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                color="primary"
+                fullWidth
+                loading={loading}
+              >
+                Send OTP
+              </LoadingButton>
+            </Box>
+          </form>
+        ) : (
+          <form onSubmit={handleSubmit(handleVerifyOtp)}>
+            <Typography variant="body1" color="text.secondary" gutterBottom>
+              We've sent a 6-digit OTP to {resetEmail}. Please enter it below to continue.
             </Typography>
-          </Stack>
-        </CardContent>
-      </Card>
-    </Box>
+            
+            <FormInput
+              name="otp"
+              label="Enter OTP"
+              type="text"
+              inputMode="numeric"
+              pattern="\d*"
+              autoComplete="one-time-code"
+              error={!!errors.otp}
+              helperText={errors.otp?.message}
+              {...register('otp', {
+                required: 'OTP is required',
+                pattern: {
+                  value: /^\d{6}$/,
+                  message: 'Please enter a valid 6-digit OTP'
+                }
+              })}
+              fullWidth
+              sx={{ mb: 2 }}
+            />
+            
+            <FormInput
+              name="newPassword"
+              label="New Password"
+              type={showPassword ? 'text' : 'password'}
+              autoComplete="new-password"
+              error={!!errors.newPassword}
+              helperText={errors.newPassword?.message}
+              showPasswordToggle
+              onTogglePassword={() => setShowPassword(!showPassword)}
+              {...register('newPassword', {
+                required: 'New password is required',
+                minLength: {
+                  value: 8,
+                  message: 'Password must be at least 8 characters long'
+                }
+              })}
+              fullWidth
+              sx={{ mb: 3, mt: 2 }}
+            />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setOtpSent(false);
+                  setMessage({ type: '', text: '' });
+                }}
+                disabled={loading}
+                fullWidth
+              >
+                Back
+              </Button>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                color="primary"
+                loading={loading}
+                fullWidth
+              >
+                Verify OTP
+              </LoadingButton>
+            </Box>
+          </form>
+        )}
+        
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Link 
+            to="/login" 
+            style={{ 
+              display: 'inline-flex',
+              alignItems: 'center',
+              color: theme.palette.primary.main,
+              textDecoration: 'none',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            <ArrowBackIcon sx={{ fontSize: 16, mr: 0.5 }} />
+            Back to Login
+          </Link>
+        </Box>
+      </Box>
+    </AuthLayout>
   );
 };
 

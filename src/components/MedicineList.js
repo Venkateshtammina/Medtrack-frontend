@@ -1,319 +1,291 @@
 import React, { useState } from "react";
-import api from "../config/api";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  TextField,
+  Button,
+  IconButton,
+  TablePagination,
+  TableSortLabel,
+  Tooltip,
+  Box,
+  Typography,
+  Alert,
+  Snackbar
+} from "@mui/material";
+import { Delete as DeleteIcon, Edit as EditIcon, Close as CloseIcon, Search as SearchIcon, Warning as WarningIcon } from "@mui/icons-material";
+import { format } from 'date-fns';
 
-const MedicineList = ({ medicines, onDelete, onUpdate }) => {
+const MedicineList = ({ 
+  medicines = [], 
+  onDelete, 
+  onEdit,
+  emptyMessage = "No medicines found" 
+}) => {
   const [search, setSearch] = useState("");
-  const [editingId, setEditingId] = useState(null);
-  const [showBanner, setShowBanner] = useState(true);
-  const [editedMedicine, setEditedMedicine] = useState({
-    name: "",
-    quantity: "",
-    expiryDate: "",
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [order, setOrder] = useState('asc');
+  const [orderBy, setOrderBy] = useState('expiryDate');
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: '',
+    severity: 'info'
   });
 
-  const handleDelete = async (id) => {
-    try {
-      await api.delete(`/api/medicines/${id}`);
+  const handleDelete = (id) => {
+    if (window.confirm('Are you sure you want to delete this medicine?')) {
       onDelete(id);
-    } catch (err) {
-      alert("Failed to delete medicine ❌");
-      console.error(err);
     }
   };
 
-  const handleEditClick = (med) => {
-    setEditingId(med._id);
-    setEditedMedicine({
-      name: med.name,
-      quantity: med.quantity,
-      expiryDate: med.expiryDate.slice(0, 10),
+  const handleEditClick = (medicine) => {
+    onEdit(medicine);
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
+
+  const handleRequestSort = (property) => {
+    const isAsc = orderBy === property && order === 'asc';
+    setOrder(isAsc ? 'desc' : 'asc');
+    setOrderBy(property);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
+
+  // Filter and sort medicines
+  const filtered = React.useMemo(() => {
+    return medicines.filter(medicine => 
+      medicine.name.toLowerCase().includes(search.toLowerCase()) ||
+      (medicine.manufacturer && medicine.manufacturer.toLowerCase().includes(search.toLowerCase()))
+    );
+  }, [medicines, search]);
+
+  const sorted = React.useMemo(() => {
+    return [...filtered].sort((a, b) => {
+      if (orderBy === 'expiryDate') {
+        return order === 'asc' 
+          ? new Date(a.expiryDate) - new Date(b.expiryDate)
+          : new Date(b.expiryDate) - new Date(a.expiryDate);
+      }
+      if (orderBy === 'quantity') {
+        return order === 'asc' 
+          ? a.quantity - b.quantity 
+          : b.quantity - a.quantity;
+      }
+      // Default sort by name
+      return order === 'asc'
+        ? a.name.localeCompare(b.name)
+        : b.name.localeCompare(a.name);
     });
-  };
+  }, [filtered, order, orderBy]);
 
-  const handleEditChange = (e) => {
-    setEditedMedicine({ ...editedMedicine, [e.target.name]: e.target.value });
-  };
+  // Pagination
+  const paginatedMedicines = sorted.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
-  const handleEditSave = async (id) => {
+  const formatExpiryDate = (dateString) => {
     try {
-      const res = await api.put(`/api/medicines/${id}`, editedMedicine);
-      onUpdate(res.data);
-      setEditingId(null);
-    } catch (err) {
-      alert("Failed to update medicine ❌");
-      console.error(err);
+      return format(new Date(dateString), 'MMM dd, yyyy');
+    } catch (e) {
+      return 'Invalid date';
     }
   };
 
-  const exportToCSV = () => {
-    const csvHeader = ["Name", "Quantity", "Expiry Date"];
-    const sorted = [...medicines].sort(
-      (a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)
-    );
-    const csvRows = sorted.map((med) => [
-      med.name,
-      med.quantity,
-      med.expiryDate.slice(0, 10),
-    ]);
-    const csvContent = [csvHeader, ...csvRows]
-      .map((row) => row.join(","))
-      .join("\n");
+  const isLowStock = (quantity) => quantity < 10;
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "medicines.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportToPDF = () => {
-    const doc = new jsPDF();
-    doc.setFontSize(18);
-    doc.text("Medicine Inventory", 14, 22);
-
-    const sorted = [...medicines].sort(
-      (a, b) => new Date(a.expiryDate) - new Date(b.expiryDate)
-    );
-    const tableData = sorted.map((med) => [
-      med.name,
-      med.quantity,
-      med.expiryDate.slice(0, 10),
-    ]);
-
-    autoTable(doc, {
-      startY: 30,
-      head: [["Name", "Quantity", "Expiry Date"]],
-      body: tableData,
-      styles: { fontSize: 12 },
-      headStyles: { fillColor: [33, 150, 243] },
-    });
-
-    doc.save("medicines.pdf");
-  };
-
-  const today = new Date();
-  const soonExpiring = medicines.filter((med) => {
-    const expiry = new Date(med.expiryDate);
+  if (medicines.length === 0) {
     return (
-      expiry >= today &&
-      expiry <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
+      <Box sx={{ p: 3, textAlign: 'center' }}>
+        <Typography variant="h6" color="textSecondary">
+          {emptyMessage}
+        </Typography>
+      </Box>
     );
-  });
-
-  const filtered = medicines
-    .filter((med) =>
-      med.name.toLowerCase().includes(search.toLowerCase())
-    )
-    .sort((a, b) => new Date(a.expiryDate) - new Date(b.expiryDate));
+  }
 
   return (
-    <div>
-      <h2>Medicine Inventory</h2>
-
-      {showBanner && soonExpiring.length > 0 && (
-        <div
-          style={{
-            backgroundColor: "#fff3cd",
-            color: "#856404",
-            padding: "10px",
-            borderRadius: "5px",
-            border: "1px solid #ffeeba",
-            marginBottom: "1rem",
-            position: "relative",
+    <Box sx={{ width: '100%' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+        <TextField
+          variant="outlined"
+          size="small"
+          placeholder="Search medicines..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ width: 300, mb: 2 }}
+          InputProps={{
+            startAdornment: <SearchIcon sx={{ color: 'action.active', mr: 1 }} />,
           }}
-        >
-          ⚠️ You have {soonExpiring.length} medicine(s) expiring in the next 7 days:
-          <ul style={{ marginTop: "5px" }}>
-            {soonExpiring.map((med) => (
-              <li key={med._id}>
-                <strong>{med.name}</strong> — Exp:{" "}
-                {new Date(med.expiryDate).toLocaleDateString()}
-              </li>
-            ))}
-          </ul>
-          <button
-            onClick={() => setShowBanner(false)}
-            style={{
-              position: "absolute",
-              top: "5px",
-              right: "10px",
-              background: "transparent",
-              border: "none",
-              fontWeight: "bold",
-              cursor: "pointer",
-            }}
-            title="Dismiss"
-          >
-            ×
-          </button>
-        </div>
-      )}
+        />
+      </Box>
 
-      <input
-        type="text"
-        placeholder="Search medicine..."
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-        style={{
-          padding: "8px",
-          marginBottom: "1rem",
-          width: "100%",
-          border: "1px solid #ccc",
-          borderRadius: "4px",
-        }}
-      />
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'name'}
+                  direction={orderBy === 'name' ? order : 'asc'}
+                  onClick={() => handleRequestSort('name')}
+                >
+                  Medicine Name
+                </TableSortLabel>
+              </TableCell>
+              <TableCell align="right">
+                <TableSortLabel
+                  active={orderBy === 'quantity'}
+                  direction={orderBy === 'quantity' ? order : 'asc'}
+                  onClick={() => handleRequestSort('quantity')}
+                >
+                  Quantity
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>
+                <TableSortLabel
+                  active={orderBy === 'expiryDate'}
+                  direction={orderBy === 'expiryDate' ? order : 'asc'}
+                  onClick={() => handleRequestSort('expiryDate')}
+                >
+                  Expiry Date
+                </TableSortLabel>
+              </TableCell>
+              <TableCell>Manufacturer</TableCell>
+              <TableCell>Price</TableCell>
+              <TableCell align="right">Actions</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
 
-      <div style={{ marginBottom: "1rem" }}>
-        <button
-          onClick={exportToCSV}
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#43a047",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-            marginRight: "10px",
-          }}
-        >
-          ⬇️ Export to CSV
-        </button>
-        <button
-          onClick={exportToPDF}
-          style={{
-            padding: "10px 15px",
-            backgroundColor: "#1e88e5",
-            color: "#fff",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          🧾 Export to PDF
-        </button>
-      </div>
-
-      {filtered.length === 0 ? (
-        <p>No medicines found.</p>
-      ) : (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {filtered.map((med) => {
-            const expiry = new Date(med.expiryDate);
-            const isExpired = expiry < today;
-            const isExpiringSoon =
-              expiry >= today &&
-              expiry <= new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000);
-            const isEditing = editingId === med._id;
-
-            return (
-              <li
-                key={med._id}
-                style={{
-                  marginBottom: "10px",
-                  borderBottom: "1px solid #ccc",
-                  paddingBottom: "10px",
-                  backgroundColor: isExpired
-                    ? "#ffebee"
-                    : isExpiringSoon
-                    ? "#fff8e1"
-                    : "transparent",
-                  color: isExpired
-                    ? "#b71c1c"
-                    : isExpiringSoon
-                    ? "#ff6f00"
-                    : "black",
-                  padding: "10px",
-                  borderRadius: "5px",
+            {paginatedMedicines.map((medicine) => (
+              <TableRow 
+                key={medicine._id}
+                hover
+                sx={{
+                  '&:last-child td, &:last-child th': { border: 0 },
+                  bgcolor: new Date(medicine.expiryDate) < new Date() ? 'rgba(255, 0, 0, 0.05)' : 'inherit'
                 }}
               >
-                {isEditing ? (
-                  <div>
-                    <input
-                      type="text"
-                      name="name"
-                      value={editedMedicine.name}
-                      onChange={handleEditChange}
-                      placeholder="Name"
-                      style={{ marginRight: "10px" }}
-                    />
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={editedMedicine.quantity}
-                      onChange={handleEditChange}
-                      placeholder="Quantity"
-                      style={{ marginRight: "10px" }}
-                    />
-                    <input
-                      type="date"
-                      name="expiryDate"
-                      value={editedMedicine.expiryDate}
-                      onChange={handleEditChange}
-                      style={{ marginRight: "10px" }}
-                    />
-                    <button onClick={() => handleEditSave(med._id)}>
-                      Save
-                    </button>
-                    <button
-                      onClick={() => setEditingId(null)}
-                      style={{ marginLeft: "5px" }}
+                <TableCell component="th" scope="row">
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    {medicine.name}
+                    {isLowStock(medicine.quantity) && (
+                      <Box 
+                        component="span" 
+                        sx={{
+                          ml: 1,
+                          px: 1,
+                          py: 0.5,
+                          bgcolor: 'warning.light',
+                          color: 'warning.contrastText',
+                          borderRadius: 1,
+                          fontSize: '0.7rem',
+                          fontWeight: 'bold'
+                        }}
+                      >
+                        Low Stock
+                      </Box>
+                    )}
+                  </Box>
+                  {medicine.description && (
+                    <Typography variant="body2" color="text.secondary">
+                      {medicine.description}
+                    </Typography>
+                  )}
+                </TableCell>
+                <TableCell align="right" sx={{ fontWeight: 'medium' }}>
+                  {medicine.quantity}
+                </TableCell>
+                <TableCell>
+                  <Box sx={{ 
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    color: new Date(medicine.expiryDate) < new Date() ? 'error.main' : 'inherit'
+                  }}>
+                    {formatExpiryDate(medicine.expiryDate)}
+                    {new Date(medicine.expiryDate) < new Date() && (
+                      <Tooltip title="Expired">
+                        <WarningIcon color="error" fontSize="small" sx={{ ml: 1 }} />
+                      </Tooltip>
+                    )}
+                  </Box>
+                </TableCell>
+                <TableCell>
+                  {medicine.manufacturer || '-'}
+                </TableCell>
+                <TableCell>
+                  {medicine.price ? `₹${parseFloat(medicine.price).toFixed(2)}` : '-'}
+                </TableCell>
+                <TableCell align="right">
+                  <Tooltip title="Edit">
+                    <IconButton 
+                      onClick={() => handleEditClick(medicine)}
+                      size="small"
+                      color="primary"
+                      sx={{ mr: 1 }}
                     >
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <>
-                    <strong>
-                      {isExpired
-                        ? "❌ "
-                        : isExpiringSoon
-                        ? "⚠️ "
-                        : ""}
-                      {med.name}
-                    </strong>{" "}
-                    — {med.quantity} units — Exp:{" "}
-                    {new Date(med.expiryDate).toLocaleDateString()}
-                    <button
-                      onClick={() => handleDelete(med._id)}
-                      style={{
-                        marginLeft: "10px",
-                        backgroundColor: "#e53935",
-                        color: "#fff",
-                        border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "3px",
-                        cursor: "pointer",
-                      }}
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton 
+                      onClick={() => handleDelete(medicine._id)}
+                      size="small"
+                      color="error"
                     >
-                      Delete
-                    </button>
-                    <button
-                      onClick={() => handleEditClick(med)}
-                      style={{
-                        marginLeft: "5px",
-                        backgroundColor: "#1565c0",
-                        color: "#fff",
-                        border: "none",
-                        padding: "5px 10px",
-                        borderRadius: "3px",
-                        cursor: "pointer",
-                      }}
-                    >
-                      Edit
-                    </button>
-                  </>
-                )}
-              </li>
-            );
-          })}
-        </ul>
-      )}
-    </div>
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      <TablePagination
+        rowsPerPageOptions={[5, 10, 25]}
+        component="div"
+        count={filtered.length}
+        rowsPerPage={rowsPerPage}
+        page={page}
+        onPageChange={handleChangePage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+      />
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity}
+          variant="filled"
+          sx={{ width: '100%' }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
+    </Box>
   );
 };
 
