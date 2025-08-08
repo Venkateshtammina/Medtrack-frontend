@@ -35,11 +35,13 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const { 
     register, 
     handleSubmit, 
     formState: { errors },
+    watch
   } = useForm({
     mode: 'onChange',
     defaultValues: {
@@ -77,17 +79,20 @@ const ForgotPassword = () => {
     setMessage({ type: '', text: '' });
     
     try {
-      await api.post('/api/auth/reset-password-with-otp', {
+      // First, verify OTP and reset password in one step
+      const response = await api.post('/api/auth/reset-password-with-otp', {
         email: resetEmail,
         otp: data.otp,
         newPassword: data.newPassword
       });
       
+      // If successful, show success message and redirect to login
       setMessage({ 
         type: 'success', 
         text: 'Password reset successful! Redirecting to login...' 
       });
       
+      // Redirect to login after a short delay
       setTimeout(() => {
         navigate('/login', { 
           state: { 
@@ -109,6 +114,32 @@ const ForgotPassword = () => {
     }
   };
 
+  // Animation variants
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { 
+        type: 'spring', 
+        stiffness: 300, 
+        damping: 24 
+      }
+    }
+  };
+
+  // Handle form submission based on current step
   const handleFormSubmit = (data) => {
     if (loading) return;
     return otpSent ? handleVerifyOtp(data) : handleRequestOtp(data);
@@ -137,10 +168,15 @@ const ForgotPassword = () => {
       <Box sx={{ width: '100%' }}>
         {message.text && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ 
+              width: '100%',
+              maxWidth: 500,
+              margin: '0 auto',
+              padding: theme.spacing(0, { xs: 1, sm: 2 })
+            }}
           >
             <Alert 
               severity={message.type}
@@ -392,6 +428,52 @@ const ForgotPassword = () => {
             )}
           </motion.form>
         </AnimatePresence>
+              sx={{ mb: 3, mt: 2 }}
+            />
+            
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => {
+                  setOtpSent(false);
+                  setMessage({ type: '', text: '' });
+                }}
+                disabled={loading}
+                fullWidth
+              >
+                Back
+              </Button>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                color="primary"
+                loading={loading}
+                fullWidth
+              >
+                Verify OTP
+              </LoadingButton>
+            </Box>
+          </form>
+        )}
+        
+        <Box sx={{ textAlign: 'center', mt: 3 }}>
+          <Link 
+            to="/login" 
+            style={{ 
+              display: 'inline-flex',
+              alignItems: 'center',
+              color: theme.palette.primary.main,
+              textDecoration: 'none',
+              '&:hover': {
+                textDecoration: 'underline'
+              }
+            }}
+          >
+            <ArrowBackIcon sx={{ fontSize: 16, mr: 0.5 }} />
+            Back to Login
+          </Link>
+        </Box>
       </Box>
     </AuthLayout>
   );

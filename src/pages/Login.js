@@ -169,12 +169,25 @@ const Login = () => {
       title="Welcome Back"
       subtitle="Sign in to continue to MedTrack"
       icon={LockIcon}
+      sx={{
+        '& .MuiTypography-h4': {
+          fontSize: { xs: '1.75rem', sm: '2rem' },
+          mb: { xs: 1, sm: 2 }
+        },
+        '& .MuiTypography-body1': {
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          mb: { xs: 3, sm: 4 }
+        }
+      }}
     >
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
-        style={{ width: '100%' }}
+        style={{ 
+          width: '100%',
+          padding: theme.spacing(0, { xs: 2, sm: 0 })
+        }}
       >
         <motion.form 
           onSubmit={handleSubmit(onSubmit)}
@@ -199,7 +212,11 @@ const Login = () => {
                   borderRadius: 2,
                   boxShadow: theme.shadows[1],
                   '& .MuiAlert-message': {
-                    width: '100%'
+                    width: '100%',
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  },
+                  '& .MuiAlert-icon': {
+                    alignItems: 'center'
                   }
                 }}
                 action={
@@ -208,6 +225,10 @@ const Login = () => {
                     color="inherit"
                     size="small"
                     onClick={() => setMessage('')}
+                    sx={{
+                      alignSelf: 'flex-start',
+                      mt: { xs: 0.5, sm: 0 }
+                    }}
                   >
                     <CloseIcon fontSize="inherit" />
                   </IconButton>
@@ -230,18 +251,33 @@ const Login = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <EmailIcon color={errors.email ? 'error' : 'action'} />
+                  <EmailIcon 
+                    color={errors.email ? 'error' : 'action'} 
+                    sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' } 
+                    }}
+                  />
                 </InputAdornment>
               ),
             }}
             sx={{
               mb: 2,
               '& .MuiOutlinedInput-root': {
+                height: { xs: 48, sm: 56 },
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
                 transition: 'all 0.3s ease-in-out',
                 '&:hover fieldset': {
                   borderColor: theme.palette.primary.main,
                 },
               },
+              '& .MuiInputLabel-root': {
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
+              },
+              '& .MuiFormHelperText-root': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                mx: 0,
+                mt: 0.5
+              }
             }}
             {...register('email', {
               required: 'Email is required',
@@ -264,7 +300,12 @@ const Login = () => {
             InputProps={{
               startAdornment: (
                 <InputAdornment position="start">
-                  <LockIcon color={errors.password ? 'error' : 'action'} />
+                  <LockIcon 
+                    color={errors.password ? 'error' : 'action'}
+                    sx={{ 
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' } 
+                    }}
+                  />
                 </InputAdornment>
               ),
               endAdornment: (
@@ -275,12 +316,17 @@ const Login = () => {
                     edge="end"
                     sx={{
                       color: theme.palette.text.secondary,
+                      p: { xs: 0.5, sm: 1 },
                       '&:hover': {
                         color: theme.palette.primary.main,
+                        backgroundColor: 'transparent',
                       },
                     }}
                   >
-                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                    {showPassword ? 
+                      <VisibilityOff fontSize={isMobile ? 'small' : 'medium'} /> : 
+                      <Visibility fontSize={isMobile ? 'small' : 'medium'} />
+                    }
                   </IconButton>
                 </InputAdornment>
               ),
@@ -288,11 +334,21 @@ const Login = () => {
             sx={{
               mb: 1,
               '& .MuiOutlinedInput-root': {
+                height: { xs: 48, sm: 56 },
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
                 transition: 'all 0.3s ease-in-out',
                 '&:hover fieldset': {
                   borderColor: theme.palette.primary.main,
                 },
               },
+              '& .MuiInputLabel-root': {
+                fontSize: { xs: '0.9375rem', sm: '1rem' },
+              },
+              '& .MuiFormHelperText-root': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                mx: 0,
+                mt: 0.5
+              }
             }}
             {...register('password', {
               required: 'Password is required'
@@ -369,7 +425,13 @@ const Login = () => {
           </Box>
         </motion.div>
         
-        <motion.div variants={itemVariants}>
+        <motion.div 
+          variants={itemVariants}
+          style={{
+            width: '100%',
+            marginTop: theme.spacing(2)
+          }}
+        >
           <LoadingButton
             type="submit"
             loading={loading}
@@ -377,13 +439,13 @@ const Login = () => {
             size="large"
             fullWidth
             sx={{
-              mt: 1,
-              py: 1.5,
+              py: { xs: 1.25, sm: 1.5 },
               borderRadius: 2,
               textTransform: 'none',
-              fontSize: '1rem',
+              fontSize: { xs: '0.9375rem', sm: '1rem' },
               fontWeight: 600,
               letterSpacing: '0.5px',
+              height: { xs: 48, sm: 56 },
               background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
               boxShadow: `0 4px 6px ${theme.palette.primary.light}40`,
               '&:hover': {
@@ -394,6 +456,12 @@ const Login = () => {
               '&:active': {
                 transform: 'translateY(0)',
                 boxShadow: `0 2px 4px ${theme.palette.primary.light}40`,
+              },
+              '& .MuiCircularProgress-root': {
+                color: 'white',
+                width: '20px !important',
+                height: '20px !important',
+                margin: '0 8px'
               },
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
@@ -441,6 +509,10 @@ const Login = () => {
         
         <motion.div 
           variants={itemVariants}
+          style={{
+            width: '100%',
+            marginTop: theme.spacing(2)
+          }}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
         >
@@ -451,13 +523,13 @@ const Login = () => {
             size="large"
             fullWidth
             sx={{
-              mt: 2,
-              py: 1.5,
+              py: { xs: 1.25, sm: 1.5 },
               borderRadius: 2,
               textTransform: 'none',
-              fontSize: '1rem',
+              fontSize: { xs: '0.9375rem', sm: '1rem' },
               fontWeight: 600,
               letterSpacing: '0.5px',
+              height: { xs: 48, sm: 56 },
               color: theme.palette.primary.main,
               borderColor: theme.palette.primary.main,
               '&:hover': {

@@ -1,9 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import { motion } from 'framer-motion';
-import { Person as PersonIcon, Email as EmailIcon, Lock as LockIcon, ArrowBack as ArrowBackIcon } from '@mui/icons-material';
-import { Box, Typography, Alert, useTheme, Checkbox, FormControlLabel, Button } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Person as PersonIcon, 
+  Email as EmailIcon, 
+  Lock as LockIcon, 
+  ArrowBack as ArrowBackIcon,
+  Visibility,
+  VisibilityOff
+} from '@mui/icons-material';
+import { 
+  Box, 
+  Typography, 
+  Alert, 
+  useTheme, 
+  Checkbox, 
+  FormControlLabel, 
+  Button, 
+  useMediaQuery,
+  IconButton,
+  InputAdornment,
+  Divider,
+  Link as MuiLink
+} from '@mui/material';
 import AuthLayout from '../components/auth/AuthLayout';
 import FormInput from '../components/auth/FormInput';
 import LoadingButton from '../components/auth/LoadingButton';
@@ -20,6 +40,8 @@ const Register = () => {
   
   const navigate = useNavigate();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
   const { 
     register, 
@@ -191,233 +213,290 @@ const Register = () => {
   const getStepContent = () => {
     if (otpSent) {
       return (
-        <Box 
-          component="form" 
-          onSubmit={handleSubmit(handleVerifyOtpAndRegister)} 
-          width="100%"
-        >
-          <Typography variant="h6" gutterBottom>Verify Your Email</Typography>
-          <Typography variant="body2" color="textSecondary" paragraph>
-            We've sent a 6-digit OTP to {formData?.email}. Please enter it below to complete your registration.
-          </Typography>
-          
-          <FormInput
-            name="otp"
-            label="Enter OTP"
-            type="text"
-            autoComplete="one-time-code"
-            inputMode="numeric"
-            pattern="\d*"
-            error={!!errors.otp}
-            helperText={errors.otp?.message}
-            {...register('otp', {
-              required: 'OTP is required',
-              pattern: {
-                value: /^\d{6}$/,
-                message: 'Please enter a valid 6-digit OTP'
-              }
-            })}
-            fullWidth
-            sx={{ mb: 3 }}
-          />
-          
-          <Box display="flex" justifyContent="space-between" mt={2}>
-            <Button
-              onClick={() => setOtpSent(false)}
-              color="inherit"
-              startIcon={<ArrowBackIcon />}
-            >
-              Back
-            </Button>
-            <LoadingButton
-              type="submit"
-              variant="contained"
-              color="primary"
-              loading={loading}
-            >
-              Verify & Register
-            </LoadingButton>
-          </Box>
-        </Box>
+        <AnimatePresence mode="wait">
+          <motion.form 
+            key={otpSent ? 'otp-form' : 'register-form'}
+            onSubmit={handleSubmit(handleVerifyOtpAndRegister)}
+            style={{ width: '100%' }}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Typography variant="h6" gutterBottom>Verify Your Email</Typography>
+            <Typography variant="body2" color="textSecondary" paragraph>
+              We've sent a 6-digit OTP to {formData?.email}. Please enter it below to complete your registration.
+            </Typography>
+            
+            <FormInput
+              name="otp"
+              label="Enter OTP"
+              type="text"
+              autoComplete="one-time-code"
+              inputMode="numeric"
+              pattern="\d*"
+              error={!!errors.otp}
+              helperText={errors.otp?.message}
+              {...register('otp', {
+                required: 'OTP is required',
+                pattern: {
+                  value: /^\d{6}$/,
+                  message: 'Please enter a valid 6-digit OTP'
+                }
+              })}
+              fullWidth
+              sx={{ mb: 3 }}
+            />
+            
+            <Box display="flex" justifyContent="space-between" mt={2}>
+              <Button
+                onClick={() => setOtpSent(false)}
+                color="inherit"
+                startIcon={<ArrowBackIcon />}
+              >
+                Back
+              </Button>
+              <LoadingButton
+                type="submit"
+                variant="contained"
+                color="primary"
+                loading={loading}
+              >
+                Verify & Register
+              </LoadingButton>
+            </Box>
+          </motion.form>
+        </AnimatePresence>
       );
     }
     
     return (
-      <Box 
-        component="form" 
-        onSubmit={handleSubmit(handleSendOtp)} 
-        width="100%"
-      >
-        <FormInput
-          name="name"
-          label="Full Name"
-          type="text"
-          autoComplete="name"
-          error={!!errors.name}
-          helperText={errors.name?.message}
-          startAdornment={
-            <PersonIcon color="action" />
-          }
-          {...register('name', {
-            required: 'Name is required',
-            minLength: {
-              value: 2,
-              message: 'Name must be at least 2 characters'
-            }
-          })}
-        />
-        
-        <FormInput
-          name="email"
-          label="Email Address"
-          type="email"
-          autoComplete="email"
-          error={!!errors.email}
-          helperText={errors.email?.message}
-          startAdornment={
-            <EmailIcon color="action" />
-          }
-          {...register('email', {
-            required: 'Email is required',
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address'
-            }
-          })}
-        />
-        
-        <FormInput
-          name="password"
-          label="Password"
-          type={showPassword ? 'text' : 'password'}
-          autoComplete="new-password"
-          error={!!errors.password}
-          helperText={errors.password?.message}
-          showPasswordToggle
-          onTogglePassword={() => setShowPassword(!showPassword)}
-          startAdornment={
-            <LockIcon color="action" />
-          }
-          {...register('password', {
-            required: 'Password is required',
-            minLength: {
-              value: 8,
-              message: 'Password must be at least 8 characters'
-            },
-            validate: (value) => {
-              if (!/[A-Z]/.test(value)) return 'Must contain at least one uppercase letter';
-              if (!/[0-9]/.test(value)) return 'Must contain at least one number';
-              if (!/[^A-Za-z0-9]/.test(value)) return 'Must contain at least one special character';
-              return true;
-            }
-          })}
-        />
-        
-        <FormInput
-          name="confirmPassword"
-          label="Confirm Password"
-          type={showConfirmPassword ? 'text' : 'password'}
-          autoComplete="new-password"
-          error={!!errors.confirmPassword}
-          helperText={errors.confirmPassword?.message}
-          showPasswordToggle
-          onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
-          startAdornment={
-            <LockIcon color="action" />
-          }
-          {...register('confirmPassword', {
-            required: 'Please confirm your password',
-            validate: value => 
-              value === password || 'Passwords do not match'
-          })}
-        />
-        
-        <Box sx={{ mt: 2, mb: 3 }}>
-          <FormControlLabel
-            control={
-              <Checkbox 
-                checked={acceptedTerms}
-                onChange={(e) => setAcceptedTerms(e.target.checked)}
-                color="primary"
-                size="small"
-              />
-            }
-            label={
-              <Typography variant="body2">
-                I agree to the{' '}
-                <Link 
-                  to="/terms" 
-                  style={{ 
-                    color: theme.palette.primary.main,
-                    textDecoration: 'none'
-                  }}
-                >
-                  Terms of Service
-                </Link>{' '}
-                and{' '}
-                <Link 
-                  to="/privacy" 
-                  style={{ 
-                    color: theme.palette.primary.main,
-                    textDecoration: 'none'
-                  }}
-                >
-                  Privacy Policy
-                </Link>
-              </Typography>
-            }
-          />
-        </Box>
-        
-        <LoadingButton
-          type="submit"
-          loading={loading}
-          variant="contained"
-          size="large"
-          fullWidth
-          sx={{
-            py: 1.5,
-            background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
-            '&:hover': {
-              background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.dark} 100%)`,
-              transform: 'translateY(-2px)'
-            }
-          }}
+      <AnimatePresence mode="wait">
+        <motion.form 
+          key={otpSent ? 'otp-form' : 'register-form'}
+          onSubmit={handleSubmit(handleSendOtp)}
+          style={{ width: '100%' }}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -10 }}
+          transition={{ duration: 0.3 }}
         >
-          Create Account
-        </LoadingButton>
-        
-        <Box sx={{ textAlign: 'center', mt: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            Already have an account?{' '}
-            <Link 
-              to="/login" 
-              style={{ 
-                color: theme.palette.primary.main,
-                fontWeight: 600,
-                textDecoration: 'none'
-              }}
-            >
-              Sign in
-            </Link>
-          </Typography>
-        </Box>
-      </Box>
+          <FormInput
+            name="name"
+            label="Full Name"
+            type="text"
+            autoComplete="name"
+            error={!!errors.name}
+            helperText={errors.name?.message}
+            startAdornment={
+              <PersonIcon color="action" />
+            }
+            {...register('name', {
+              required: 'Name is required',
+              minLength: {
+                value: 2,
+                message: 'Name must be at least 2 characters'
+              }
+            })}
+          />
+          
+          <FormInput
+            name="email"
+            label="Email Address"
+            type="email"
+            autoComplete="email"
+            error={!!errors.email}
+            helperText={errors.email?.message}
+            startAdornment={
+              <EmailIcon color="action" />
+            }
+            {...register('email', {
+              required: 'Email is required',
+              pattern: {
+                value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                message: 'Invalid email address'
+              }
+            })}
+          />
+          
+          <FormInput
+            name="password"
+            label="Password"
+            type={showPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            error={!!errors.password}
+            helperText={errors.password?.message}
+            showPasswordToggle
+            onTogglePassword={() => setShowPassword(!showPassword)}
+            startAdornment={
+              <LockIcon color="action" />
+            }
+            {...register('password', {
+              required: 'Password is required',
+              minLength: {
+                value: 8,
+                message: 'Password must be at least 8 characters'
+              },
+              validate: (value) => {
+                if (!/[A-Z]/.test(value)) return 'Must contain at least one uppercase letter';
+                if (!/[0-9]/.test(value)) return 'Must contain at least one number';
+                if (!/[^A-Za-z0-9]/.test(value)) return 'Must contain at least one special character';
+                return true;
+              }
+            })}
+          />
+          
+          <FormInput
+            name="confirmPassword"
+            label="Confirm Password"
+            type={showConfirmPassword ? 'text' : 'password'}
+            autoComplete="new-password"
+            error={!!errors.confirmPassword}
+            helperText={errors.confirmPassword?.message}
+            showPasswordToggle
+            onTogglePassword={() => setShowConfirmPassword(!showConfirmPassword)}
+            startAdornment={
+              <LockIcon color="action" />
+            }
+            {...register('confirmPassword', {
+              required: 'Please confirm your password',
+              validate: value => 
+                value === password || 'Passwords do not match'
+            })}
+          />
+          
+          <Box sx={{ mt: 2, mb: 3 }}>
+            <FormControlLabel
+              control={
+                <Checkbox 
+                  checked={acceptedTerms}
+                  onChange={(e) => setAcceptedTerms(e.target.checked)}
+                  color="primary"
+                  size="small"
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  I agree to the{' '}
+                  <Link 
+                    to="/terms" 
+                    style={{ 
+                      color: theme.palette.primary.main,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Terms of Service
+                  </Link>{' '}
+                  and{' '}
+                  <Link 
+                    to="/privacy" 
+                    style={{ 
+                      color: theme.palette.primary.main,
+                      textDecoration: 'none'
+                    }}
+                  >
+                    Privacy Policy
+                  </Link>
+                </Typography>
+              }
+            />
+          </Box>
+          
+          <LoadingButton
+            type="submit"
+            loading={loading}
+            variant="contained"
+            size="large"
+            fullWidth
+            sx={{
+              py: 1.5,
+              background: `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              '&:hover': {
+                background: `linear-gradient(90deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.dark} 100%)`,
+                transform: 'translateY(-2px)'
+              }
+            }}
+          >
+            Create Account
+          </LoadingButton>
+          
+          <Box sx={{ textAlign: 'center', mt: 3 }}>
+            <Typography variant="body2" color="text.secondary">
+              Already have an account?{' '}
+              <Link 
+                to="/login" 
+                style={{ 
+                  color: theme.palette.primary.main,
+                  fontWeight: 600,
+                  textDecoration: 'none'
+                }}
+              >
+                Sign in
+              </Link>
+            </Typography>
+          </Box>
+        </motion.form>
+      </AnimatePresence>
     );
+  };
+
+  // Animation variants for form elements
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { type: 'spring', stiffness: 300, damping: 24 }
+    }
+  };
+
+  // Add a check to prevent form submission during loading
+  const handleFormSubmit = (data) => {
+    if (loading) return;
+    return otpSent ? handleVerifyOtpAndRegister(data) : handleSendOtp(data);
   };
 
   return (
     <AuthLayout
-      title="Create an Account"
-      subtitle="Join MedTrack to manage your medications"
-      icon={PersonIcon}
+      title={otpSent ? 'Verify Your Email' : 'Create an Account'}
+      subtitle={otpSent 
+        ? 'We\'ve sent a verification code to your email' 
+        : 'Join MedTrack to manage your medications'}
+      icon={otpSent ? EmailIcon : PersonIcon}
+      sx={{
+        '& .MuiTypography-h4': {
+          fontSize: { xs: '1.5rem', sm: '2rem' },
+          mb: { xs: 1, sm: 2 }
+        },
+        '& .MuiTypography-body1': {
+          fontSize: { xs: '0.875rem', sm: '1rem' },
+          mb: { xs: 2, sm: 3 }
+        }
+      }}
     >
       <Box sx={{ width: '100%' }}>
         {message.text && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+            style={{ 
+              width: '100%',
+              maxWidth: 500,
+              margin: '0 auto',
+              padding: theme.spacing(0, { xs: 1, sm: 2 })
+            }}
           >
             <Alert 
               severity={message.type}
