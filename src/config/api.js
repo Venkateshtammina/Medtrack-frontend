@@ -1,8 +1,10 @@
 import axios from "axios";
 import { toast } from 'react-toastify';
 
-// Use localhost for development, fallback to production URL if needed
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Use production environment URL, fallback to localhost for development
+const rawUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// Safely strip any trailing slash to avoid double slashes (e.g., https://api.com//api/auth)
+const API_BASE_URL = rawUrl.endsWith('/') ? rawUrl.slice(0, -1) : rawUrl;
 
 console.log('API Base URL:', API_BASE_URL);
 
