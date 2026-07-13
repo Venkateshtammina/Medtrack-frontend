@@ -101,12 +101,10 @@ const Login = () => {
       const response = await api.post('/api/auth/login', {
         email: data.email.trim().toLowerCase(),
         password: data.password,
-        rememberMe: data.rememberMe
       });
       
       if (response.data.token) {
-        // Store token based on rememberMe preference
-        const storage = data.rememberMe ? localStorage : sessionStorage;
+        const storage = rememberMe ? localStorage : sessionStorage;
         storage.setItem('token', response.data.token);
         
         // Store user data if available
@@ -166,7 +164,7 @@ const Login = () => {
 
   return (
     <AuthLayout
-      title="Welcome Back"
+      title="Welcome"
       subtitle="Sign in to continue to MedTrack"
       icon={LockIcon}
       sx={{

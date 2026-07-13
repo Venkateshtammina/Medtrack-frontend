@@ -14,25 +14,20 @@ import {
 } from '@mui/material';
 import { 
   Add as AddIcon, 
-  Remove as RemoveIcon,
   Delete as DeleteIcon,
   Update as UpdateIcon
 } from '@mui/icons-material';
 import { format } from 'date-fns';
 
-const InventoryLogs = ({ token }) => {
+const InventoryLogs = () => {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchLogs = async () => {
-      if (!token) return;
-      
       setIsLoading(true);
       try {
-        const res = await api.get("/api/inventory-logs", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const res = await api.get("/api/inventory-logs");
         setLogs(res.data);
       } catch (err) {
         console.error("Failed to fetch logs", err);
@@ -42,32 +37,36 @@ const InventoryLogs = ({ token }) => {
     };
 
     fetchLogs();
-  }, [token]);
+  }, []);
+
+  const normalizeAction = (action) => action?.toLowerCase().replace(/\s+/g, ' ').trim();
 
   const getActionIcon = (action) => {
-    switch (action) {
-      case 'added':
-        return <AddIcon color="success" fontSize="small" />;
-      case 'deleted':
-        return <DeleteIcon color="error" fontSize="small" />;
-      case 'updated':
-        return <UpdateIcon color="info" fontSize="small" />;
-      default:
-        return null;
+    const normalized = normalizeAction(action);
+    if (normalized === 'added' || normalized === 'stock added') {
+      return <AddIcon color="success" fontSize="small" />;
     }
+    if (normalized === 'deleted') {
+      return <DeleteIcon color="error" fontSize="small" />;
+    }
+    if (normalized === 'updated' || normalized === 'stock used') {
+      return <UpdateIcon color="info" fontSize="small" />;
+    }
+    return null;
   };
 
   const getActionColor = (action) => {
-    switch (action) {
-      case 'added':
-        return 'success.main';
-      case 'deleted':
-        return 'error.main';
-      case 'updated':
-        return 'info.main';
-      default:
-        return 'text.primary';
+    const normalized = normalizeAction(action);
+    if (normalized === 'added' || normalized === 'stock added') {
+      return 'success.main';
     }
+    if (normalized === 'deleted') {
+      return 'error.main';
+    }
+    if (normalized === 'updated' || normalized === 'stock used') {
+      return 'info.main';
+    }
+    return 'text.primary';
   };
 
   if (isLoading) {
@@ -120,9 +119,9 @@ const InventoryLogs = ({ token }) => {
                     </Box>
                   </TableCell>
                   <TableCell>
-                    {log.details && (
+                    {log.quantity != null && (
                       <Typography variant="body2" color="text.secondary">
-                        {log.details}
+                        Qty: {log.quantity}
                       </Typography>
                     )}
                   </TableCell>

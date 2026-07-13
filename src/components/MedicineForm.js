@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, memo, useCallback } from "react";
 import {
   TextField,
   Button,
   Box,
   Typography,
-  Paper,
   InputAdornment,
   IconButton,
   Dialog,
@@ -66,9 +65,9 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDateChange = (date) => {
+  const handleDateChange = useCallback((date) => {
     setFormData((prev) => ({ ...prev, expiryDate: date }));
-  };
+  }, []);
 
 
   const handleSubmit = async (e) => {
@@ -127,6 +126,9 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
       onClose={onClose}
       maxWidth="sm"
       fullWidth
+      TransitionProps={{
+        timeout: 200
+      }}
       PaperProps={{
         sx: {
           borderRadius: 2,
@@ -157,7 +159,7 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
       </DialogTitle>
       
       <DialogContent>
-      
+
       {error && (
         <Box
           sx={{
@@ -187,7 +189,7 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
             {error}
           </Box>
         )}
-        
+
         <Box
           sx={{
             display: "grid",
@@ -206,7 +208,7 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
             variant="outlined"
             size="small"
           />
-          
+
           <TextField
             fullWidth
             label="Description"
@@ -241,8 +243,8 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
             onChange={handleChange}
             variant="outlined"
             size="small"
-            inputProps={{ 
-              step: "0.01", 
+            inputProps={{
+              step: "0.01",
               min: 0,
               placeholder: 'Optional'
             }}
@@ -256,12 +258,20 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
               label="Expiry Date *"
               value={formData.expiryDate}
               onChange={handleDateChange}
+              loading={false}
               slotProps={{
                 textField: {
                   fullWidth: true,
                   size: 'small',
                   required: true,
                   variant: 'outlined'
+                },
+                popper: {
+                  sx: {
+                    '& .MuiPickersDay-root': {
+                      fontSize: '0.875rem'
+                    }
+                  }
                 }
               }}
             />
@@ -279,9 +289,9 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
           />
         </Box>
 
-        <DialogActions sx={{ px: 0, pb: 0, mt: 2 }}>
-          <Button 
-            onClick={onClose} 
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 2 }}>
+          <Button
+            onClick={onClose}
             color="inherit"
             disabled={isSubmitting}
           >
@@ -311,11 +321,11 @@ const MedicineForm = ({ onAddMedicine, medicine, onUpdateMedicine, open, onClose
               </Box>
             )}
           </Button>
-        </DialogActions>
+        </Box>
       </Box>
       </DialogContent>
     </Dialog>
   );
 };
 
-export default MedicineForm;
+export default memo(MedicineForm);

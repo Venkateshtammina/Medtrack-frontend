@@ -51,20 +51,24 @@ api.interceptors.request.use(
 // Response interceptor
 api.interceptors.response.use(
   (response) => {
-    console.groupEnd(); // Close the request group
-    console.group(`API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
-    console.log('Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      data: response.data
-    });
-    console.groupEnd();
+    if (process.env.NODE_ENV === 'development') {
+      console.groupEnd();
+      console.group(`API Response: ${response.config.method?.toUpperCase()} ${response.config.url}`);
+      console.log('Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        data: response.data
+      });
+      console.groupEnd();
+    }
     
     return response;
   },
   (error) => {
-    console.groupEnd(); // Close the request group if it wasn't closed
-    console.group('API Error');
+    if (process.env.NODE_ENV === 'development') {
+      console.groupEnd();
+      console.group('API Error');
+    }
     
     if (error.code === 'ECONNABORTED') {
       console.error('Request Timeout:', error.message);
@@ -98,7 +102,9 @@ api.interceptors.response.use(
       toast.error('Error setting up request. Please try again.');
     }
     
-    console.groupEnd();
+    if (process.env.NODE_ENV === 'development') {
+      console.groupEnd();
+    }
     return Promise.reject(error);
   }
 );

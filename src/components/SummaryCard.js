@@ -46,32 +46,55 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
       sx={{
         p: 3,
         height: '100%',
-        borderRadius: 3,
-        background: theme.palette.background.paper,
-        border: '1px solid',
-        borderColor: 'divider',
-        transition: 'all 0.3s ease',
+        borderRadius: 4,
+        background: 'rgba(255, 255, 255, 0.98)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.5)',
+        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        position: 'relative',
+        overflow: 'hidden',
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: -50,
+          right: -50,
+          width: 100,
+          height: 100,
+          background: `radial-gradient(circle, ${alpha(colors.icon, 0.1)} 0%, transparent 70%)`,
+          borderRadius: '50%',
+          pointerEvents: 'none'
+        },
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: `0 8px 24px 0 ${colors.shadow}`,
-          borderColor: colors.icon
+          transform: 'translateY(-12px) scale(1.03)',
+          boxShadow: `0 20px 60px ${colors.shadow}`,
+          background: 'rgba(255, 255, 255, 1)',
+          borderColor: colors.icon,
+          '&::before': {
+            background: `radial-gradient(circle, ${alpha(colors.icon, 0.2)} 0%, transparent 70%)`
+          }
         }
       }}
     >
-      <Box display="flex" alignItems="center" mb={1.5}>
+      <Box display="flex" alignItems="center" mb={2}>
         <Box
           sx={{
-            width: 48,
-            height: 48,
-            borderRadius: 2,
+            width: 56,
+            height: 56,
+            borderRadius: 3,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             mr: 2,
-            background: alpha(colors.icon, 0.1),
-            color: colors.icon,
+            background: `linear-gradient(135deg, ${colors.icon} 0%, ${alpha(colors.icon, 0.7)} 100%)`,
+            color: 'white',
+            boxShadow: `0 4px 15px ${colors.shadow}`,
             '& svg': {
-              fontSize: 28
+              fontSize: 32
+            },
+            transition: 'all 0.3s ease',
+            '&:hover': {
+              transform: 'rotate(10deg) scale(1.1)'
             }
           }}
         >
@@ -82,21 +105,22 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
             variant="subtitle2" 
             color="textSecondary"
             sx={{ 
-              fontSize: '0.75rem',
+              fontSize: '0.8rem',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '0.5px',
-              mb: 0.25
+              letterSpacing: '1px',
+              mb: 0.5,
+              opacity: 0.8
             }}
           >
             {title}
           </Typography>
           <Typography 
-            variant="h4" 
-            fontWeight={700}
+            variant="h3" 
+            fontWeight={800}
             sx={{ 
-              lineHeight: 1.2,
-              background: `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.text.secondary} 100%)`,
+              lineHeight: 1.1,
+              background: `linear-gradient(135deg, ${colors.icon} 0%, ${alpha(colors.icon, 0.6)} 100%)`,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -111,10 +135,26 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
         sx={{ 
           height: 4,
           width: '100%',
-          background: `linear-gradient(90deg, ${colors.icon} 0%, ${alpha(colors.icon, 0.3)} 100%)`,
+          background: `linear-gradient(90deg, ${colors.icon} 0%, ${alpha(colors.icon, 0.2)} 100%)`,
           borderRadius: 2,
           mt: 2,
-          opacity: 0.8
+          opacity: 0.9,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: `linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%)`,
+            animation: 'shimmer 2s infinite'
+          },
+          '@keyframes shimmer': {
+            '0%': { transform: 'translateX(-100%)' },
+            '100%': { transform: 'translateX(100%)' }
+          }
         }}
       />
     </Paper>
