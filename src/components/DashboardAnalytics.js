@@ -32,8 +32,6 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const DashboardAnalytics = ({ medicines }) => {
   const theme = useTheme();
-  
-  // Declaring today at the top level fixes the ESLint scope error
   const today = useMemo(() => new Date(), []);
 
   const analyticsData = useMemo(() => {
@@ -59,7 +57,6 @@ const DashboardAnalytics = ({ medicines }) => {
       const diffTime = expiryDate - today;
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      // 1. Calculate Active Stock Thresholds
       if (qty <= 10) {
         criticalArr++;
         criticalCount++;
@@ -71,7 +68,6 @@ const DashboardAnalytics = ({ medicines }) => {
         overstockArr++;
       }
 
-      // 2. Track Expiry and Active Wastage
       if (diffDays <= 0) {
         expiredCount++; 
       } else if (diffDays <= 90) {
@@ -133,27 +129,24 @@ const DashboardAnalytics = ({ medicines }) => {
 
   return (
     <Box sx={{ 
-      height: 'calc(100vh - 48px)', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      overflow: 'hidden',
+      minHeight: '100vh', 
       bgcolor: '#FAFBFD',
-      p: 3
+      p: 4,
+      pb: 6 // Added bottom breathing room for natural page scrolls
     }}>
       
-      <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
-        <Box>
-          <Typography variant="h4" sx={{ fontWeight: 800, color: '#1C1C1E', letterSpacing: '-1px' }}>
-            System Intelligence
-          </Typography>
-          <Typography variant="body2" sx={{ color: '#8E8E93', fontWeight: 500, mt: 0.5 }}>
-            Real-time monitoring of medical supply levels, critical batch safety, and disposal trajectory feeds.
-          </Typography>
-        </Box>
+      {/* Page Title Header */}
+      <Box sx={{ mb: 4 }}>
+        <Typography variant="h4" sx={{ fontWeight: 800, color: '#1C1C1E', letterSpacing: '-1px' }}>
+          Inventory Intelligence Center
+        </Typography>
+        <Typography variant="body2" sx={{ color: '#8E8E93', fontWeight: 500, mt: 0.5 }}>
+          Comprehensive real-time status diagnostics of medical supplies, batch validation lifecycles, and risk profiles.
+        </Typography>
       </Box>
 
-      {/* Row 1: Clinical KPI Status Bar */}
-      <Grid container spacing={3} sx={{ mb: 3, flexShrink: 0 }}>
+      {/* Row 1: Top Statistics KPI Summary Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         {summaryCards.map((card, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
             <Card sx={{ 
@@ -162,7 +155,7 @@ const DashboardAnalytics = ({ medicines }) => {
               border: '1px solid #ECEEF2',
               bgcolor: '#FFFFFF'
             }}>
-              <Box sx={{ p: 2.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <Box sx={{ p: 3, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Box>
                   <Typography variant="caption" sx={{ color: '#8E8E93', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', fontSize: '0.65rem' }}>
                     {card.title}
@@ -171,7 +164,7 @@ const DashboardAnalytics = ({ medicines }) => {
                     {card.value}
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: card.bg, color: card.color, width: 48, height: 48, borderRadius: '12px', fontSize: '1.4rem' }}>
+                <Avatar sx={{ bgcolor: card.bg, color: card.color, width: 52, height: 52, borderRadius: '14px', fontSize: '1.5rem' }}>
                   {card.icon}
                 </Avatar>
               </Box>
@@ -180,21 +173,20 @@ const DashboardAnalytics = ({ medicines }) => {
         ))}
       </Grid>
 
-      {/* Main Container Layout */}
-      <Grid container spacing={3} sx={{ flexGrow: 1, minHeight: 0, pb: 1 }}>
+      {/* Row 2: Visual Distribution and Tracking Containers */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
         
-        {/* Left Column */}
-        <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
+        {/* Left Graphics Card Panel */}
+        <Grid item xs={12} md={7}>
           <Card sx={{ 
             borderRadius: '20px', 
             boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
             border: '1px solid #ECEEF2',
             bgcolor: '#FFFFFF',
+            p: 3,
+            height: '100%',
             display: 'flex',
-            flexDirection: 'column',
-            flexGrow: 1,
-            minHeight: 0,
-            p: 3
+            flexDirection: 'column'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
               <AssessmentIcon sx={{ color: '#1C1C1E' }} />
@@ -202,19 +194,19 @@ const DashboardAnalytics = ({ medicines }) => {
                 Stock Volume Allocation Matrix
               </Typography>
             </Box>
-            <Divider sx={{ borderColor: '#F2F4F7' }} />
+            <Divider sx={{ borderColor: '#F2F4F7', mb: 3 }} />
 
-            <Grid container sx={{ flexGrow: 1, minHeight: 0, mt: 2, alignItems: 'center' }}>
-              <Grid item xs={12} sm={6} sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <ResponsiveContainer width="100%" height={240}>
+            <Grid container spacing={2} sx={{ flexGrow: 1, alignItems: 'center' }}>
+              <Grid item xs={12} sm={6} sx={{ display: 'flex', justifyContent: 'center' }}>
+                <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
                       data={analyticsData.stockLevels}
                       cx="50%"
                       cy="50%"
-                      innerRadius={75}
-                      outerRadius={105}
-                      paddingAngle={4}
+                      innerRadius={80}
+                      outerRadius={110}
+                      paddingAngle={5}
                       dataKey="value"
                     >
                       {analyticsData.stockLevels.map((entry, idx) => (
@@ -226,11 +218,11 @@ const DashboardAnalytics = ({ medicines }) => {
                 </ResponsiveContainer>
               </Grid>
 
-              <Grid item xs={12} sm={6} sx={{ pl: { sm: 4 } }}>
+              <Grid item xs={12} sm={6}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {analyticsData.stockLevels.map((item, idx) => (
                     <Box key={idx} sx={{ 
-                      p: 1.5, 
+                      p: 2, 
                       bgcolor: '#F8F9FA', 
                       borderRadius: '12px', 
                       borderLeft: `5px solid ${item.color}`,
@@ -252,19 +244,17 @@ const DashboardAnalytics = ({ medicines }) => {
           </Card>
         </Grid>
 
-        {/* Right Column */}
-        <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: 3 }}>
-          
+        {/* Right Expiration Chart Panel */}
+        <Grid item xs={12} md={5}>
           <Card sx={{ 
             borderRadius: '20px', 
             boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
             border: '1px solid #ECEEF2',
             bgcolor: '#FFFFFF',
-            flexGrow: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            minHeight: 0,
-            p: 2.5
+            p: 3,
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
           }}>
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
               <AccessTimeIcon sx={{ color: '#1C1C1E', fontSize: '1.2rem' }} />
@@ -272,79 +262,85 @@ const DashboardAnalytics = ({ medicines }) => {
                 Expiration Risk Horizon
               </Typography>
             </Box>
-            <Box sx={{ flexGrow: 1, minHeight: 0 }}>
+            <Divider sx={{ borderColor: '#F2F4F7', mb: 3 }} />
+            <Box sx={{ width: '100%', height: 260 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={analyticsData.expiryTrends} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+                <BarChart data={analyticsData.expiryTrends} margin={{ top: 10, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F2F4F7" />
                   <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#8E8E93', fontWeight: 600 }} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fontSize: 11, fill: '#8E8E93' }} axisLine={false} tickLine={false} allowDecimals={false} />
                   <Tooltip cursor={{ fill: 'rgba(0, 0, 0, 0.01)' }} />
-                  <Bar dataKey="expiring" fill="#FF3B30" radius={[6, 6, 0, 0]} maxBarSize={28} />
+                  <Bar dataKey="expiring" fill="#FF3B30" radius={[6, 6, 0, 0]} maxBarSize={32} />
                 </BarChart>
               </ResponsiveContainer>
             </Box>
           </Card>
+        </Grid>
 
+      </Grid>
+
+      {/* Row 3: Live Additions Activity Stream (Spans full page width cleanly below charts) */}
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
           <Card sx={{ 
             borderRadius: '20px', 
             boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
             border: '1px solid #ECEEF2',
             bgcolor: '#FFFFFF',
-            flexGrow: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            minHeight: 0,
-            p: 2.5
+            p: 3
           }}>
-            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1C1C1E', mb: 1.5 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1C1C1E', mb: 2 }}>
               Recent Inventory Additions
             </Typography>
-            <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 0.5 }}>
-              <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {analyticsData.recentMedicines.map((medicine, index) => {
-                  const isExpired = new Date(medicine.expiryDate) <= today;
-                  return (
-                    <ListItem 
-                      key={medicine._id || index}
-                      disablePadding
-                      sx={{
-                        p: 1.5,
-                        borderRadius: '12px',
-                        bgcolor: '#F8F9FA',
-                        border: '1px solid #ECEEF2',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                      }}
-                    >
-                      <Box sx={{ overflow: 'hidden', mr: 2 }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1C1C1E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {medicine.name}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: '#8E8E93', display: 'block', mt: 0.5, fontWeight: 500 }}>
-                          Units: {medicine.quantity} &bull; Exp: {new Date(medicine.expiryDate).toLocaleDateString()}
-                        </Typography>
-                      </Box>
-                      <Box sx={{
-                        px: 1.5,
-                        py: 0.5,
-                        borderRadius: '8px',
-                        bgcolor: isExpired ? 'rgba(122, 31, 162, 0.1)' : medicine.quantity <= 10 ? 'rgba(255, 59, 48, 0.1)' : 'rgba(52, 199, 89, 0.1)',
-                        color: isExpired ? '#7A1FA2' : medicine.quantity <= 10 ? '#FF3B30' : '#34C759',
-                        fontSize: '0.65rem',
-                        fontWeight: 800,
-                        letterSpacing: '0.5px',
-                        textTransform: 'uppercase'
-                      }}>
-                        {isExpired ? 'EXPIRED' : medicine.quantity <= 10 ? 'Critical' : 'Nominal'}
-                      </Box>
-                    </ListItem>
-                  );
-                })}
-              </List>
-            </Box>
+            <Divider sx={{ borderColor: '#F2F4F7', mb: 3 }} />
+            
+            <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {analyticsData.recentMedicines.map((medicine, index) => {
+                const isExpired = new Date(medicine.expiryDate) <= today;
+                return (
+                  <ListItem 
+                    key={medicine._id || index}
+                    disablePadding
+                    sx={{
+                      p: 2,
+                      borderRadius: '14px',
+                      bgcolor: '#F8F9FA',
+                      border: '1px solid #ECEEF2',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      transition: 'transform 0.15s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateX(4px)'
+                      }
+                    }}
+                  >
+                    <Box sx={{ overflow: 'hidden', mr: 2 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#1C1C1E' }}>
+                        {medicine.name}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: '#8E8E93', display: 'block', mt: 0.5, fontWeight: 500 }}>
+                        Units Stored: {medicine.quantity} &bull; Expiration Date: {new Date(medicine.expiryDate).toLocaleDateString()}
+                      </Typography>
+                    </Box>
+                    <Box sx={{
+                      px: 2,
+                      py: 0.75,
+                      borderRadius: '8px',
+                      bgcolor: isExpired ? 'rgba(122, 31, 162, 0.1)' : medicine.quantity <= 10 ? 'rgba(255, 59, 48, 0.1)' : 'rgba(52, 199, 89, 0.1)',
+                      color: isExpired ? '#7A1FA2' : medicine.quantity <= 10 ? '#FF3B30' : '#34C759',
+                      fontSize: '0.68rem',
+                      fontWeight: 800,
+                      letterSpacing: '0.5px',
+                      textTransform: 'uppercase'
+                    }}>
+                      {isExpired ? 'EXPIRED' : medicine.quantity <= 10 ? 'Critical Low' : 'Stable'}
+                    </Box>
+                  </ListItem>
+                );
+              })}
+            </List>
           </Card>
-
         </Grid>
       </Grid>
     </Box>
