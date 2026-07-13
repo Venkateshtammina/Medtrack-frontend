@@ -26,18 +26,17 @@ import {
 import InventoryIcon from '@mui/icons-material/Inventory';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const DashboardAnalytics = ({ medicines }) => {
   const theme = useTheme();
 
-  // Compute metrics with high visual fidelity fallback parameters
   const analyticsData = useMemo(() => {
     if (!medicines || medicines.length === 0) {
       return {
-        totals: { items: 0, critical: 0, expiring: 0, value: 0 },
+        totals: { items: 0, critical: 0, expiring: 0, expired: 0 },
         stockLevels: [],
         expiryTrends: [],
         recentMedicines: []
@@ -48,15 +47,17 @@ const DashboardAnalytics = ({ medicines }) => {
     let totalItems = medicines.length;
     let criticalCount = 0;
     let expiringCount90Days = 0;
-    let totalInventoryValue = 0;
+    let expiredCount = 0;
 
     let criticalArr = 0, lowArr = 0, optimalArr = 0, overstockArr = 0;
 
     medicines.forEach(m => {
       const qty = Number(m.quantity) || 0;
-      const price = Number(m.price) || 0;
-      totalInventoryValue += qty * price;
+      const expiryDate = new Date(m.expiryDate);
+      const diffTime = expiryDate - today;
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
+      // 1. Calculate Active Stock Thresholds
       if (qty <= 10) {
         criticalArr++;
         criticalCount++;
@@ -68,15 +69,14 @@ const DashboardAnalytics = ({ medicines }) => {
         overstockArr++;
       }
 
-      const expiryDate = new Date(m.expiryDate);
-      const diffTime = expiryDate - today;
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      if (diffDays > 0 && diffDays <= 90) {
-        expiringCount90Days++;
+      // 2. Track Expiry and Active Wastage
+      if (diffDays <= 0) {
+        expiredCount++; // Fully expired medicine counter
+      } else if (diffDays <= 90) {
+        expiringCount90Days++; // Warning zone tracking
       }
     });
 
-    // Premium Color Palette mapping for the distribution tracking
     const stockLevels = [
       { name: 'Critical (0-10)', value: criticalArr, color: '#FF3B30' },
       { name: 'Low (11-50)', value: lowArr, color: '#FF9500' },
@@ -105,7 +105,7 @@ const DashboardAnalytics = ({ medicines }) => {
       .slice(0, 5);
 
     return {
-      totals: { items: totalItems, critical: criticalCount, expiring: expiringCount90Days, value: totalInventoryValue },
+      totals: { items: totalItems, critical: criticalCount, expiring: expiringCount90Days, expired: expiredCount },
       stockLevels,
       expiryTrends,
       recentMedicines
@@ -122,11 +122,12 @@ const DashboardAnalytics = ({ medicines }) => {
     );
   }
 
+  // Clinical Focused Summary Cards
   const summaryCards = [
-    { title: 'Active SKUs', value: analyticsData.totals.items, icon: <InventoryIcon fontSize="inherit" />, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.08)' },
-    { title: 'Critical Anomalies', value: analyticsData.totals.critical, icon: <WarningAmberIcon fontSize="inherit" />, color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.08)' },
-    { title: 'Approaching Expiry', value: analyticsData.totals.expiring, icon: <NewReleasesIcon fontSize="inherit" />, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.08)' },
-    { title: 'Asset Valuation', value: `₹${analyticsData.totals.value.toLocaleString('en-IN')}`, icon: <AccountBalanceWalletIcon fontSize="inherit" />, color: '#34C759', bg: 'rgba(52, 199, 89, 0.08)' }
+    { title: 'Total Medicines', value: analyticsData.totals.items, icon: <InventoryIcon fontSize="inherit" />, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.08)' },
+    { title: 'Critical Low Stock', value: analyticsData.totals.critical, icon: <WarningAmberIcon fontSize="inherit" />, color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.08)' },
+    { title: 'Expiring Soon (90d)', value: analyticsData.totals.expiring, icon: <NewReleasesIcon fontSize="inherit" />, color: '#FF9500', bg: 'rgba(255, 149, 0, 0.08)' },
+    { title: 'Expired (Action Req.)', value: analyticsData.totals.expired, icon: <DeleteForeverIcon fontSize="inherit" />, color: '#7A1FA2', bg: 'rgba(122, 31, 162, 0.08)' }
   ];
 
   return (
@@ -139,19 +140,18 @@ const DashboardAnalytics = ({ medicines }) => {
       p: 3
     }}>
       
-      {/* Premium Dynamic Title Segment */}
       <Box sx={{ mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexShrink: 0 }}>
         <Box>
           <Typography variant="h4" sx={{ fontWeight: 800, color: '#1C1C1E', letterSpacing: '-1px' }}>
             System Intelligence
           </Typography>
           <Typography variant="body2" sx={{ color: '#8E8E93', fontWeight: 500, mt: 0.5 }}>
-            Real-time multi-dimensional overview of medical inventory, stock tracking pipelines, and valuation matrices.
+            Real-time monitoring of medical supply levels, critical batch safety, and disposal trajectory feeds.
           </Typography>
         </Box>
       </Box>
 
-      {/* Row 1: Flat, Minimalist SaaS Metrics Bar */}
+      {/* Row 1: Clinical KPI Status Bar */}
       <Grid container spacing={3} sx={{ mb: 3, flexShrink: 0 }}>
         {summaryCards.map((card, i) => (
           <Grid item xs={12} sm={6} md={3} key={i}>
@@ -170,7 +170,7 @@ const DashboardAnalytics = ({ medicines }) => {
                     {card.value}
                   </Typography>
                 </Box>
-                <Avatar sx={{ bgcolor: card.bg, color: card.color, width: 48, height: 48, borderRadius: '12px', fontSize: '1.5rem' }}>
+                <Avatar sx={{ bgcolor: card.bg, color: card.color, width: 48, height: 48, borderRadius: '12px', fontSize: '1.4rem' }}>
                   {card.icon}
                 </Avatar>
               </Box>
@@ -179,10 +179,10 @@ const DashboardAnalytics = ({ medicines }) => {
         ))}
       </Grid>
 
-      {/* Main Container Layout: 2-Column Command Interface */}
+      {/* Main Container Layout */}
       <Grid container spacing={3} sx={{ flexGrow: 1, minHeight: 0, pb: 1 }}>
         
-        {/* Left Column: Symmetrical Analytics Graphics Section */}
+        {/* Left Column */}
         <Grid item xs={12} md={7} sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0 }}>
           <Card sx={{ 
             borderRadius: '20px', 
@@ -203,7 +203,6 @@ const DashboardAnalytics = ({ medicines }) => {
             </Box>
             <Divider sx={{ borderColor: '#F2F4F7' }} />
 
-            {/* Split Symmetrical Graphic Block inside Left Window Container */}
             <Grid container sx={{ flexGrow: 1, minHeight: 0, mt: 2, alignItems: 'center' }}>
               <Grid item xs={12} sm={6} sx={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <ResponsiveContainer width="100%" height={240}>
@@ -221,12 +220,11 @@ const DashboardAnalytics = ({ medicines }) => {
                         <Cell key={`cell-${idx}`} fill={entry.color} style={{ outline: 'none' }} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value) => [`${value} SKUs`, 'Distribution']} />
+                    <Tooltip formatter={(value) => [`${value} Meds`, 'Volume']} />
                   </PieChart>
                 </ResponsiveContainer>
               </Grid>
 
-              {/* Grid-aligned side details replacing random bullet rows */}
               <Grid item xs={12} sm={6} sx={{ pl: { sm: 4 } }}>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   {analyticsData.stockLevels.map((item, idx) => (
@@ -240,10 +238,10 @@ const DashboardAnalytics = ({ medicines }) => {
                       alignItems: 'center' 
                     }}>
                       <Typography variant="body2" sx={{ color: '#48484A', fontWeight: 600 }}>
-                        {item.name.split(' ')[0]} Threshold
+                        {item.name.split(' ')[0]} Stock
                       </Typography>
                       <Typography variant="body2" sx={{ fontWeight: 800, color: item.color }}>
-                        {item.value} Items
+                        {item.value} Batches
                       </Typography>
                     </Box>
                   ))}
@@ -253,10 +251,9 @@ const DashboardAnalytics = ({ medicines }) => {
           </Card>
         </Grid>
 
-        {/* Right Column: Symmetrical Secondary Graphs and Feeds Section */}
+        {/* Right Column */}
         <Grid item xs={12} md={5} sx={{ display: 'flex', flexDirection: 'column', height: '100%', minHeight: 0, gap: 3 }}>
           
-          {/* Top Half Panel: Time-series Trajectory */}
           <Card sx={{ 
             borderRadius: '20px', 
             boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
@@ -287,7 +284,6 @@ const DashboardAnalytics = ({ medicines }) => {
             </Box>
           </Card>
 
-          {/* Bottom Half Panel: Live Action Activity Stream */}
           <Card sx={{ 
             borderRadius: '20px', 
             boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.03)',
@@ -300,47 +296,50 @@ const DashboardAnalytics = ({ medicines }) => {
             p: 2.5
           }}>
             <Typography variant="subtitle1" sx={{ fontWeight: 700, color: '#1C1C1E', mb: 1.5 }}>
-              Recent Telemetry Log Updates
+              Recent Inventory Additions
             </Typography>
             <Box sx={{ flexGrow: 1, overflowY: 'auto', pr: 0.5 }}>
               <List disablePadding sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                {analyticsData.recentMedicines.map((medicine, index) => (
-                  <ListItem 
-                    key={medicine._id || index}
-                    disablePadding
-                    sx={{
-                      p: 1.5,
-                      borderRadius: '12px',
-                      bgcolor: '#F8F9FA',
-                      border: '1px solid #ECEEF2',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center'
-                    }}
-                  >
-                    <Box sx={{ overflow: 'hidden', mr: 2 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 700, color: '#1C1C1E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {medicine.name}
-                      </Typography>
-                      <Typography variant="caption" sx={{ color: '#8E8E93', display: 'block', mt: 0.5, fontWeight: 500 }}>
-                        Units Available: {medicine.quantity} &bull; Exp: {new Date(medicine.expiryDate).toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                    <Box sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: '8px',
-                      bgcolor: medicine.quantity <= 10 ? 'rgba(255, 59, 48, 0.1)' : 'rgba(52, 199, 89, 0.1)',
-                      color: medicine.quantity <= 10 ? '#FF3B30' : '#34C759',
-                      fontSize: '0.65rem',
-                      fontWeight: 800,
-                      letterSpacing: '0.5px',
-                      textTransform: 'uppercase'
-                    }}>
-                      {medicine.quantity <= 10 ? 'Critical' : 'Nominal'}
-                    </Box>
-                  </ListItem>
-                ))}
+                {analyticsData.recentMedicines.map((medicine, index) => {
+                  const isExpired = new Date(medicine.expiryDate) <= today;
+                  return (
+                    <ListItem 
+                      key={medicine._id || index}
+                      disablePadding
+                      sx={{
+                        p: 1.5,
+                        borderRadius: '12px',
+                        bgcolor: '#F8F9FA',
+                        border: '1px solid #ECEEF2',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}
+                    >
+                      <Box sx={{ overflow: 'hidden', mr: 2 }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: '#1C1C1E', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {medicine.name}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: '#8E8E93', display: 'block', mt: 0.5, fontWeight: 500 }}>
+                          Units: {medicine.quantity} &bull; Exp: {new Date(medicine.expiryDate).toLocaleDateString()}
+                        </Typography>
+                      </Box>
+                      <Box sx={{
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: '8px',
+                        bgcolor: isExpired ? 'rgba(122, 31, 162, 0.1)' : medicine.quantity <= 10 ? 'rgba(255, 59, 48, 0.1)' : 'rgba(52, 199, 89, 0.1)',
+                        color: isExpired ? '#7A1FA2' : medicine.quantity <= 10 ? '#FF3B30' : '#34C759',
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        letterSpacing: '0.5px',
+                        textTransform: 'uppercase'
+                      }}>
+                        {isExpired ? 'EXPIRED' : medicine.quantity <= 10 ? 'Critical' : 'Nominal'}
+                      </Box>
+                    </ListItem>
+                  );
+                })}
               </List>
             </Box>
           </Card>
