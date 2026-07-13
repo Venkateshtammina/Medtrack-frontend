@@ -32,6 +32,9 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 
 const DashboardAnalytics = ({ medicines }) => {
   const theme = useTheme();
+  
+  // Declaring today at the top level fixes the ESLint scope error
+  const today = useMemo(() => new Date(), []);
 
   const analyticsData = useMemo(() => {
     if (!medicines || medicines.length === 0) {
@@ -43,7 +46,6 @@ const DashboardAnalytics = ({ medicines }) => {
       };
     }
 
-    const today = new Date();
     let totalItems = medicines.length;
     let criticalCount = 0;
     let expiringCount90Days = 0;
@@ -71,9 +73,9 @@ const DashboardAnalytics = ({ medicines }) => {
 
       // 2. Track Expiry and Active Wastage
       if (diffDays <= 0) {
-        expiredCount++; // Fully expired medicine counter
+        expiredCount++; 
       } else if (diffDays <= 90) {
-        expiringCount90Days++; // Warning zone tracking
+        expiringCount90Days++; 
       }
     });
 
@@ -110,7 +112,7 @@ const DashboardAnalytics = ({ medicines }) => {
       expiryTrends,
       recentMedicines
     };
-  }, [medicines]);
+  }, [medicines, today]);
 
   if (!medicines || medicines.length === 0) {
     return (
@@ -122,7 +124,6 @@ const DashboardAnalytics = ({ medicines }) => {
     );
   }
 
-  // Clinical Focused Summary Cards
   const summaryCards = [
     { title: 'Total Medicines', value: analyticsData.totals.items, icon: <InventoryIcon fontSize="inherit" />, color: '#007AFF', bg: 'rgba(0, 122, 255, 0.08)' },
     { title: 'Critical Low Stock', value: analyticsData.totals.critical, icon: <WarningAmberIcon fontSize="inherit" />, color: '#FF3B30', bg: 'rgba(255, 59, 48, 0.08)' },
