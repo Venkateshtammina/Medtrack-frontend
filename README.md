@@ -1,164 +1,152 @@
-# MedTrack Backend — Core Infrastructure API
+# MedTrack Frontend — Operational Management Interface
 
-The **MedTrack Backend** is the production-grade API powering the MedTrack application. It provides secure authentication, medicine and inventory management, automated clinical verification workflows, email notification services, and reliable serverless database connectivity for cloud deployments.
+The **MedTrack Frontend** is the modern, responsive web application for the MedTrack platform. Built with **React**, it provides an intuitive interface for healthcare operators to manage medicine inventory, monitor stock levels, visualize analytics, and securely interact with the MedTrack backend.
 
 ---
 
-## Features
+# Features
 
-- Secure JWT-based authentication
-- OTP email verification and password reset
-- Medicine and inventory management APIs
-- Inventory logging and tracking
-- MongoDB Atlas integration using Mongoose
-- Production-ready Express.js REST API
-- Gmail SMTP email notifications
-- Serverless deployment support for Vercel
-- Dynamic CORS support for local and production environments
-- Automatic MongoDB reconnection for serverless functions
+- Secure user authentication
+- Responsive dashboard
+- Medicine inventory management
+- Real-time stock monitoring
+- Interactive analytics and charts
+- Batch expiry tracking
+- Modern Material UI design
+- Smooth page transitions and animations
+- REST API integration
+- Production-ready deployment with Vercel
 
 ---
 
 # Repository Structure
 
 ```text
-backend/
-├── config/              # Application configuration
-├── models/              # Mongoose schemas
-│   ├── User.js
-│   ├── Medicine.js
-│   └── InventoryLog.js
-├── routes/              # API route modules
-│   ├── auth.js
-│   ├── medicine.js
-│   └── logs.js
-├── utils/               # Helper utilities
-│   ├── mail.js
-│   ├── otp.js
-│   └── ...
-├── db.js                # MongoDB connection helper
-├── server.js            # Express application entry point
+frontend/
+├── public/                  # Static assets and application icons
+├── src/
+│   ├── components/
+│   │   ├── auth/            # Authentication components
+│   │   ├── dashboard/       # Dashboard widgets
+│   │   ├── inventory/       # Inventory UI components
+│   │   └── ...
+│   ├── config/
+│   │   └── api.js           # Axios API configuration
+│   ├── pages/               # Application pages
+│   │   ├── Login.js
+│   │   ├── Register.js
+│   │   ├── Dashboard.js
+│   │   └── ...
+│   ├── App.js               # Route configuration
+│   └── index.js             # React entry point
 ├── package.json
-└── vercel.json          # Vercel deployment configuration
+└── vercel.json
 ```
 
 ---
 
 # Tech Stack
 
-- Node.js
-- Express.js
-- MongoDB Atlas
-- Mongoose
-- JWT Authentication
-- Nodemailer
-- bcrypt
-- dotenv
-- CORS
+- React 18
+- React Router DOM
+- Material UI (MUI v5)
+- Axios
+- React Hook Form
+- Recharts
+- Framer Motion
+- JavaScript (ES6+)
 
 ---
 
-# Core Infrastructure
+# User Interface Architecture
 
-## Automatic Database Reconnection
+## Healthcare-Centric Dashboard
 
-The backend is designed specifically for serverless environments.
+The dashboard is designed around healthcare operations instead of traditional business metrics.
 
-Before processing any incoming request, the application checks the MongoDB connection state.
+It provides visual indicators for:
 
-```javascript
-if (mongoose.connection.readyState !== 1) {
-    await connectDB();
-}
+- Low stock medicines
+- Expiring batches
+- Inventory levels
+- Medicine availability
+- Critical stock alerts
+- Inventory trends
+
+---
+
+## Responsive Layout
+
+The application uses flexible layouts to ensure compatibility across:
+
+- Desktop
+- Laptop
+- Tablet
+- Mobile devices
+
+Instead of fixed-height layouts, components use responsive sizing with:
+
+```css
+min-height: 100vh;
+height: auto;
 ```
 
-If the connection has been closed due to serverless execution lifecycle, a new connection pool is created automatically.
-
-This prevents:
-
-- MongoDB timeout errors
-- Lambda cold start connection failures
-- Dropped database sessions
-- Random production disconnects
+This prevents content clipping and allows long inventory lists and analytics pages to scroll naturally.
 
 ---
 
-## Dynamic CORS Configuration
+## Registration Policy Modal
 
-Instead of using a fixed origin list, the API dynamically validates incoming requests.
+During account registration, users can review application policies without leaving the registration process.
 
-Allowed origins include:
+The embedded modal provides:
 
-- localhost
-- Local development ports
-- Vercel preview deployments
-- Production Vercel deployments
+- Privacy policy
+- Terms and conditions
+- Data handling information
 
-Any unknown origin is rejected automatically.
+This improves the user experience by keeping operators within the onboarding flow.
 
-Example:
+---
+
+## Smooth Animations
+
+The interface uses **Framer Motion** for:
+
+- Page transitions
+- Card animations
+- Form step transitions
+- Error feedback
+- Dashboard interactions
+- Modal animations
+
+These animations enhance usability while maintaining a professional healthcare-focused interface.
+
+---
+
+# API Configuration
+
+The frontend communicates with the backend through Axios.
+
+Example configuration:
 
 ```javascript
-https://medtrack.vercel.app
-https://medtrack-git-feature.vercel.app
-http://localhost:3000
-http://localhost:5173
+import axios from "axios";
+
+const api = axios.create({
+    baseURL:
+        process.env.REACT_APP_API_URL ||
+        "http://localhost:5000",
+    withCredentials: true,
+});
+
+export default api;
 ```
 
----
+The API automatically connects to:
 
-## Email Infrastructure
-
-Email notifications are powered by **Nodemailer** using Gmail SMTP.
-
-Supported email workflows include:
-
-- OTP verification
-- Password reset
-- Expiry alerts
-- Notification emails
-
-Instead of Flexbox layouts, all templates use inline CSS table structures to ensure compatibility with:
-
-- Gmail
-- Outlook
-- Apple Mail
-- Yahoo Mail
-- Mobile email clients
-
----
-
-# API Modules
-
-## Authentication
-
-- Register
-- Login
-- Email verification
-- OTP generation
-- OTP verification
-- Password reset
-- JWT authentication
-
----
-
-## Medicine
-
-- Add medicine
-- Update medicine
-- Delete medicine
-- Search medicine
-- Inventory updates
-- Batch tracking
-
----
-
-## Inventory Logs
-
-- Stock history
-- Quantity updates
-- Inventory movement tracking
-- Audit records
+- Local backend during development
+- Production backend using the `REACT_APP_API_URL` environment variable
 
 ---
 
@@ -168,7 +156,7 @@ Instead of Flexbox layouts, all templates use inline CSS table structures to ens
 
 ```bash
 git clone <repository-url>
-cd backend
+cd frontend
 ```
 
 ---
@@ -183,20 +171,16 @@ npm install
 
 ## 3. Configure Environment Variables
 
-Create a `.env` file inside the project root.
+Create a `.env` file in the project root.
 
 ```env
-PORT=5000
+REACT_APP_API_URL=http://localhost:5000
+```
 
-MONGO_URI=mongodb+srv://<username>:<password>@cluster0.xxxx.mongodb.net/medtrack?retryWrites=true&w=majority
+For production:
 
-JWT_SECRET=your_ultra_secure_jwt_secret
-
-EMAIL_HOST=smtp.gmail.com
-EMAIL_PORT=465
-EMAIL_USER=your_verified_gmail@gmail.com
-EMAIL_PASS=your_google_app_password
-EMAIL_FROM=your_verified_gmail@gmail.com
+```env
+REACT_APP_API_URL=https://your-backend.vercel.app
 ```
 
 ---
@@ -207,147 +191,180 @@ EMAIL_FROM=your_verified_gmail@gmail.com
 npm start
 ```
 
-If everything is configured correctly, the server will display:
+The application will launch automatically at:
 
-```text
-Server running on port 5000
-MongoDB Connected
 ```
+http://localhost:3000
+```
+
+with hot reloading enabled for development.
 
 ---
 
-# Environment Variables
+# Build for Production
 
-| Variable | Description |
-|----------|-------------|
-| PORT | Express server port |
-| MONGO_URI | MongoDB Atlas connection string |
-| JWT_SECRET | JWT signing secret |
-| EMAIL_HOST | SMTP host |
-| EMAIL_PORT | SMTP port |
-| EMAIL_USER | Gmail account |
-| EMAIL_PASS | Google App Password |
-| EMAIL_FROM | Sender email |
+Generate optimized production assets:
+
+```bash
+npm run build
+```
+
+This creates a `build/` directory containing:
+
+- Minified JavaScript
+- Optimized CSS
+- Static assets
+- Production-ready HTML
+
+These files are suitable for deployment on Vercel or any static hosting provider.
 
 ---
 
-# Vercel Deployment
+# Major Components
 
-## 1. MongoDB Network Access
+## Authentication
 
-Since Vercel uses serverless functions, outbound IP addresses are dynamic.
-
-Inside MongoDB Atlas:
-
-```
-Security
-    ↓
-Network Access
-    ↓
-Add IP Address
-```
-
-Whitelist:
-
-```text
-0.0.0.0/0
-```
-
-This allows Atlas to accept connections from Vercel's serverless infrastructure.
+- Login
+- Registration
+- OTP verification
+- Password reset
+- Protected routes
 
 ---
 
-## 2. Configure Environment Variables
+## Dashboard
 
-In the Vercel Dashboard:
-
-```
-Project
-    ↓
-Settings
-    ↓
-Environment Variables
-```
-
-Add:
-
-```
-MONGO_URI
-JWT_SECRET
-EMAIL_HOST
-EMAIL_PORT
-EMAIL_USER
-EMAIL_PASS
-EMAIL_FROM
-```
+- Inventory overview
+- Low stock summary
+- Expiry alerts
+- Analytics cards
+- Stock statistics
 
 ---
 
-## 3. Updating Environment Variables
+## Inventory
 
-If your MongoDB password or connection string changes:
+- Medicine list
+- Search and filtering
+- Add/Edit/Delete medicines
+- Batch management
+- Quantity updates
 
-1. Open **Settings → Environment Variables**
-2. Delete the old `MONGO_URI`
-3. Add the updated value
-4. Save the changes
-5. Redeploy the project
+---
 
-Vercel injects environment variables only during deployment, so a redeploy is required after any change.
+## Analytics
+
+Interactive charts built with **Recharts** display:
+
+- Stock distribution
+- Inventory trends
+- Expiry timelines
+- Medicine availability
+- Dashboard KPIs
 
 ---
 
 # Project Architecture
 
 ```
-Client
-    │
-    ▼
-Express Server
-    │
-    ▼
-Authentication Middleware
-    │
-    ▼
-MongoDB Connection Check
-    │
-    ▼
-Database Reconnection (if needed)
-    │
-    ▼
-Route Handler
-    │
-    ▼
+User
+   │
+   ▼
+React Application
+   │
+   ▼
+React Router
+   │
+   ▼
+UI Components
+   │
+   ▼
+Axios API Client
+   │
+   ▼
+MedTrack Backend API
+   │
+   ▼
 MongoDB Atlas
 ```
 
 ---
 
-# Security
+# Deployment
 
-- JWT authentication
-- Password hashing using bcrypt
-- Secure OTP generation
-- Protected API routes
-- Environment variable isolation
-- Dynamic CORS validation
-- Automatic database reconnection
-- Gmail App Password authentication
-- Production-ready MongoDB Atlas integration
+## Vercel Deployment
+
+Deploy the frontend using Vercel.
+
+Ensure the following environment variable is configured:
+
+```
+REACT_APP_API_URL=https://your-backend.vercel.app
+```
+
+After updating environment variables:
+
+1. Open the Vercel Dashboard
+2. Navigate to **Settings → Environment Variables**
+3. Add or update `REACT_APP_API_URL`
+4. Save the changes
+5. Redeploy the project
+
+---
+
+# Performance Optimizations
+
+- Code splitting
+- Lazy loading
+- Optimized production builds
+- Tree shaking
+- Responsive layouts
+- Hardware-accelerated animations
+- Efficient API communication
+- Component-based architecture
+
+---
+
+# Dependencies
+
+| Package | Purpose |
+|----------|---------|
+| React 18 | User interface |
+| React Router DOM | Client-side routing |
+| Material UI | UI components |
+| Axios | API communication |
+| React Hook Form | Form management |
+| Recharts | Analytics and charts |
+| Framer Motion | Animations |
+
+---
+
+# Development Workflow
+
+```bash
+# Install packages
+npm install
+
+# Run development server
+npm start
+
+# Create production build
+npm run build
+```
 
 ---
 
 # Deployment Checklist
 
-- [ ] MongoDB Atlas cluster created
-- [ ] Database user created
-- [ ] Network Access allows `0.0.0.0/0`
-- [ ] Environment variables configured
-- [ ] Gmail App Password generated
+- [ ] Backend deployed
+- [ ] `REACT_APP_API_URL` configured
+- [ ] Environment variables added
+- [ ] Production build generated
 - [ ] Vercel deployment completed
-- [ ] API endpoints tested
-- [ ] Email verification working
-- [ ] Database connectivity verified
+- [ ] Authentication tested
+- [ ] Dashboard verified
+- [ ] API connectivity confirmed
+- [ ] Responsive layouts tested
 
 ---
 
@@ -357,8 +374,8 @@ This project is intended for educational and production deployment purposes. Cus
 
 ---
 
-## Author
+# Author
 
-**MedTrack Backend API**
+**MedTrack Frontend**
 
-Production-ready Express.js backend built for secure medicine inventory management, authentication, serverless deployment, and automated notification workflows.
+A modern React-based healthcare inventory management interface designed for secure authentication, responsive inventory tracking, analytics visualization, and seamless integration with the MedTrack backend.
