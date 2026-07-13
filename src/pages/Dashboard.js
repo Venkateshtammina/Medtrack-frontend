@@ -278,7 +278,8 @@ const Dashboard = () => {
     <Box sx={{ 
       display: 'flex',
       flexDirection: 'column',
-      minHeight: '100vh',
+      height: '100vh',
+      overflow: 'hidden',
       bgcolor: 'background.default',
     }}>
       <CssBaseline />
@@ -369,7 +370,9 @@ const Dashboard = () => {
             width: '100%',
             maxWidth: '1400px',
             mx: 'auto',
-            mb: { xs: 7, md: 0 }
+            mb: { xs: 7, md: 0 },
+            overflowY: 'auto',
+            overflowX: 'hidden'
           }}
         >
           {/* Main Content Area */}
