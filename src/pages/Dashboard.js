@@ -41,7 +41,9 @@ import {
   CalendarMonth as CalendarIcon,
   Menu as MenuIcon,
   List as ListIcon,
-  Analytics as AnalyticsIcon
+  Analytics as AnalyticsIcon,
+  LocalPharmacy as LocalPharmacyIcon,
+  Archive as ArchiveIcon
 } from '@mui/icons-material';
 
 const Dashboard = () => {
@@ -55,9 +57,11 @@ const Dashboard = () => {
   
   // Dashboard state
   const [medicines, setMedicines] = useState([]);
+  const [archivedMedicines, setArchivedMedicines] = useState([]);
   const [activeTab, setActiveTab] = useState('medicines');
   const [isMedicineDialogOpen, setIsMedicineDialogOpen] = useState(false);
   const [editingMedicine, setEditingMedicine] = useState(null);
+  const [medicineQuickFilter, setMedicineQuickFilter] = useState('all');
   
   // Get token from storage
   const token = localStorage.getItem('token') || sessionStorage.getItem('token');
@@ -69,8 +73,14 @@ const Dashboard = () => {
   // Fetch medicines from API
   const fetchMedicines = async () => {
     try {
-      const response = await api.get('/api/medicines');
-      setMedicines(response.data);
+      const [activeResponse, archivedResponse] = await Promise.all([
+        api.get('/api/medicines'),
+        api.get('/api/medicines?archived=true'),
+      ]);
+      setMedicines(activeResponse.data);
+      // Guard against legacy API responses that can include records without
+      // an archive timestamp. Only the scheduler marks a medicine archived.
+      setArchivedMedicines(archivedResponse.data.filter((medicine) => Boolean(medicine.archivedAt)));
     } catch (error) {
       enqueueSnackbar('Failed to fetch medicines', { variant: 'error' });
       console.error('Error fetching medicines:', error);
@@ -98,6 +108,12 @@ const Dashboard = () => {
   const handleOpenAddMedicineDialog = () => {
     setEditingMedicine(null);
     setIsMedicineDialogOpen(true);
+  };
+
+  const handleSummaryCardClick = (filter) => {
+    setMedicineQuickFilter(filter);
+    setActiveTab('medicines');
+    setBottomNavValue('medicines');
   };
 
   // Handle close medicine dialog
@@ -170,8 +186,11 @@ const Dashboard = () => {
   // Drawer content
   const drawer = (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ p: 2.5, textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-        <Typography variant="h5" component="div" sx={{ fontWeight: 800, color: 'primary.main', letterSpacing: '-0.5px' }}>
+      <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 1.25 }}>
+        <Box sx={{ width: 38, height: 38, borderRadius: 2.5, display: 'grid', placeItems: 'center', color: 'white', bgcolor: 'primary.main', boxShadow: '0 8px 18px rgba(22,119,255,.22)' }}>
+          <LocalPharmacyIcon fontSize="small" />
+        </Box>
+        <Typography variant="h5" component="div" sx={{ fontWeight: 800, color: 'text.primary', letterSpacing: '-0.5px' }}>
           MedTrack
         </Typography>
       </Box>
@@ -184,15 +203,15 @@ const Dashboard = () => {
             borderRadius: 2.5,
             mb: 1,
             cursor: 'pointer',
-            bgcolor: activeTab === 'medicines' ? 'primary.main' : 'transparent',
-            color: activeTab === 'medicines' ? 'white' : 'text.primary',
+            bgcolor: activeTab === 'medicines' ? 'primary.light' : 'transparent',
+            color: activeTab === 'medicines' ? 'primary.dark' : 'text.primary',
             '&:hover': {
-              bgcolor: activeTab === 'medicines' ? 'primary.dark' : 'action.hover',
+              bgcolor: activeTab === 'medicines' ? 'primary.light' : 'action.hover',
             },
             transition: 'all 0.2s'
           }}
         >
-          <ListItemIcon sx={{ color: activeTab === 'medicines' ? 'white' : 'inherit', minWidth: 40 }}>
+          <ListItemIcon sx={{ color: activeTab === 'medicines' ? 'primary.main' : 'inherit', minWidth: 40 }}>
             <InventoryIcon />
           </ListItemIcon>
           <ListItemText primary="Medicines" primaryTypographyProps={{ fontWeight: activeTab === 'medicines' ? 700 : 500 }} />
@@ -204,15 +223,15 @@ const Dashboard = () => {
             borderRadius: 2.5,
             mb: 1,
             cursor: 'pointer',
-            bgcolor: activeTab === 'analytics' ? 'primary.main' : 'transparent',
-            color: activeTab === 'analytics' ? 'white' : 'text.primary',
+            bgcolor: activeTab === 'analytics' ? 'primary.light' : 'transparent',
+            color: activeTab === 'analytics' ? 'primary.dark' : 'text.primary',
             '&:hover': {
-              bgcolor: activeTab === 'analytics' ? 'primary.dark' : 'action.hover',
+              bgcolor: activeTab === 'analytics' ? 'primary.light' : 'action.hover',
             },
             transition: 'all 0.2s'
           }}
         >
-          <ListItemIcon sx={{ color: activeTab === 'analytics' ? 'white' : 'inherit', minWidth: 40 }}>
+          <ListItemIcon sx={{ color: activeTab === 'analytics' ? 'primary.main' : 'inherit', minWidth: 40 }}>
             <AnalyticsIcon />
           </ListItemIcon>
           <ListItemText primary="Analytics Dashboard" primaryTypographyProps={{ fontWeight: activeTab === 'analytics' ? 700 : 500 }} />
@@ -224,18 +243,36 @@ const Dashboard = () => {
             borderRadius: 2.5,
             mb: 1,
             cursor: 'pointer',
-            bgcolor: activeTab === 'logs' ? 'primary.main' : 'transparent',
-            color: activeTab === 'logs' ? 'white' : 'text.primary',
+            bgcolor: activeTab === 'logs' ? 'primary.light' : 'transparent',
+            color: activeTab === 'logs' ? 'primary.dark' : 'text.primary',
             '&:hover': {
-              bgcolor: activeTab === 'logs' ? 'primary.dark' : 'action.hover',
+              bgcolor: activeTab === 'logs' ? 'primary.light' : 'action.hover',
             },
             transition: 'all 0.2s'
           }}
         >
-          <ListItemIcon sx={{ color: activeTab === 'logs' ? 'white' : 'inherit', minWidth: 40 }}>
+          <ListItemIcon sx={{ color: activeTab === 'logs' ? 'primary.main' : 'inherit', minWidth: 40 }}>
             <ListIcon />
           </ListItemIcon>
           <ListItemText primary="Inventory Action Logs" primaryTypographyProps={{ fontWeight: activeTab === 'logs' ? 700 : 500 }} />
+        </ListItem>
+        <ListItem
+          button
+          onClick={() => setActiveTab('archive')}
+          sx={{
+            borderRadius: 2.5,
+            mb: 1,
+            cursor: 'pointer',
+            bgcolor: activeTab === 'archive' ? 'primary.light' : 'transparent',
+            color: activeTab === 'archive' ? 'primary.dark' : 'text.primary',
+            '&:hover': { bgcolor: activeTab === 'archive' ? 'primary.light' : 'action.hover' },
+            transition: 'all 0.2s'
+          }}
+        >
+          <ListItemIcon sx={{ color: activeTab === 'archive' ? 'primary.main' : 'inherit', minWidth: 40 }}>
+            <ArchiveIcon />
+          </ListItemIcon>
+          <ListItemText primary="Expired archive" primaryTypographyProps={{ fontWeight: activeTab === 'archive' ? 700 : 500 }} />
         </ListItem>
       </List>
       <Box sx={{ mt: 'auto', p: 2 }}>
@@ -293,7 +330,7 @@ const Dashboard = () => {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1, fontWeight: 700 }}>
-            {activeTab === 'medicines' ? 'Medicines' : activeTab === 'analytics' ? 'Analytics' : 'Inventory Logs'}
+            {activeTab === 'medicines' ? 'Medicines' : activeTab === 'analytics' ? 'Analytics' : activeTab === 'archive' ? 'Expired archive' : 'Inventory Logs'}
           </Typography>
         </Toolbar>
       </AppBar>
@@ -356,7 +393,7 @@ const Dashboard = () => {
           component="main"
           sx={{ 
             flexGrow: 1,
-            p: { xs: 2, sm: 4 },
+            p: { xs: 2, sm: 4, lg: 5 },
             width: '100%',
             maxWidth: '1400px',
             mx: 'auto',
@@ -367,9 +404,22 @@ const Dashboard = () => {
         >
           {/* Dynamic Render Context Wrapper */}
           <Box sx={{ width: '100%' }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, justifyContent: 'space-between', alignItems: 'flex-start', mb: 4 }}>
+              <Box>
+                <Typography variant="h4">
+                  {activeTab === 'medicines' ? 'Medicine inventory' : activeTab === 'analytics' ? 'Inventory analytics' : activeTab === 'archive' ? 'Expired medicine archive' : 'Activity log'}
+                </Typography>
+                <Typography color="text.secondary" sx={{ mt: 0.75 }}>
+                  {activeTab === 'medicines' ? 'Monitor stock, expiry dates, and inventory health in one place.' : activeTab === 'analytics' ? 'Review your inventory status and upcoming expiry risks.' : activeTab === 'archive' ? 'Expired medicines are kept here for 30 days before permanent deletion.' : 'Review changes made to your medicine inventory.'}
+                </Typography>
+              </Box>
+              <Box sx={{ px: 1.5, py: 0.75, borderRadius: 99, bgcolor: 'rgba(18, 183, 106, 0.10)', color: 'success.main', fontSize: 13, fontWeight: 700 }}>
+                System online
+              </Box>
+            </Box>
             
             {/* Conditional Core Layout Banner: Hides baseline elements if Analytics tab is selected */}
-            {activeTab !== 'analytics' && (
+            {activeTab === 'medicines' && (
               <>
                 {/* Summary Cards Row */}
                 <Grid container spacing={3} sx={{ mb: 4 }}>
@@ -379,6 +429,7 @@ const Dashboard = () => {
                       value={medicines.length}
                       icon={InventoryIcon}
                       color="primary"
+                      onClick={() => handleSummaryCardClick('all')}
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -387,6 +438,7 @@ const Dashboard = () => {
                       value={medicines.filter(m => m.quantity <= (m.lowStockThreshold || 10)).length}
                       icon={WarningIcon}
                       color="warning"
+                      onClick={() => handleSummaryCardClick('lowStock')}
                     />
                   </Grid>
                   <Grid item xs={12} sm={4}>
@@ -401,6 +453,7 @@ const Dashboard = () => {
                       }).length}
                       icon={CalendarIcon}
                       color="error"
+                      onClick={() => handleSummaryCardClick('expiringSoon')}
                     />
                   </Grid>
                 </Grid>
@@ -480,10 +533,36 @@ const Dashboard = () => {
                     medicines={medicines}
                     onEdit={handleEditMedicine}
                     onDelete={handleDeleteMedicine}
+                    quickFilter={medicineQuickFilter}
+                    onClearQuickFilter={() => setMedicineQuickFilter('all')}
                   />
                 </Paper>
               ) : activeTab === 'analytics' ? (
                 <DashboardAnalytics medicines={medicines} />
+              ) : activeTab === 'archive' ? (
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: { xs: 2, sm: 3 },
+                    borderRadius: 4,
+                    bgcolor: 'background.paper',
+                    border: '1px solid',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Box sx={{ mb: 2.5 }}>
+                    <Typography variant="subtitle1" fontWeight={750}>Archived medicines</Typography>
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                      These records are read-only and will be permanently deleted 30 days after archival.
+                    </Typography>
+                  </Box>
+                  <MedicineList
+                    medicines={archivedMedicines}
+                    emptyMessage="No archived medicines"
+                    readOnly
+                    showArchiveDate
+                  />
+                </Paper>
               ) : (
                 <Paper
                   elevation={0}
@@ -548,6 +627,11 @@ const Dashboard = () => {
                 value="logs"
                 label="Logs"
                 icon={<ListIcon />}
+              />
+              <BottomNavigationAction
+                value="archive"
+                label="Archive"
+                icon={<ArchiveIcon />}
               />
             </BottomNavigation>
           </Box>

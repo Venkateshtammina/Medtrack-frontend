@@ -15,7 +15,8 @@ import {
   Box,
   Typography,
   Alert,
-  Snackbar
+  Snackbar,
+  Chip
 } from "@mui/material";
 import { Delete as DeleteIcon, Edit as EditIcon, Search as SearchIcon, Warning as WarningIcon, Inventory2 as InventoryIcon } from "@mui/icons-material";
 import { format } from 'date-fns';
@@ -40,7 +41,11 @@ const MedicineList = ({
   medicines = [], 
   onDelete, 
   onEdit,
-  emptyMessage = "No medicines found" 
+  emptyMessage = "No medicines found",
+  quickFilter = 'all',
+  onClearQuickFilter,
+  readOnly = false,
+  showArchiveDate = false,
 }) => {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -89,13 +94,28 @@ const MedicineList = ({
 
   useEffect(() => {
     setPage(0);
-  }, [medicines.length]);
+  }, [medicines.length, quickFilter]);
+
+  const quickFilterLabel = {
+    lowStock: 'Low stock',
+    expiringSoon: 'Expiring soon (30 days)',
+  }[quickFilter];
 
   // Filter and sort medicines
   const filtered = React.useMemo(() => {
     const query = search.trim().toLowerCase();
-    return medicines.filter((medicine) => matchesSearch(medicine, query));
-  }, [medicines, search]);
+    return medicines.filter((medicine) => {
+      if (!matchesSearch(medicine, query)) return false;
+      if (quickFilter === 'lowStock') {
+        return medicine.quantity <= (medicine.lowStockThreshold || 10);
+      }
+      if (quickFilter === 'expiringSoon') {
+        const daysUntilExpiry = Math.ceil((new Date(medicine.expiryDate) - new Date()) / (1000 * 60 * 60 * 24));
+        return daysUntilExpiry >= 0 && daysUntilExpiry <= 30;
+      }
+      return true;
+    });
+  }, [medicines, search, quickFilter]);
 
   const sorted = React.useMemo(() => {
     return [...filtered].sort((a, b) => {
@@ -166,10 +186,16 @@ const MedicineList = ({
 
   return (
     <Box sx={{ width: '100%' }}>
+      {quickFilterLabel && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+          <Typography variant="body2" color="text.secondary">Showing:</Typography>
+          <Chip label={quickFilterLabel} onDelete={onClearQuickFilter} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
+        </Box>
+      )}
       {filtered.length === 0 ? (
         <Box sx={{ p: 3, textAlign: 'center' }}>
           <Typography variant="body1" color="textSecondary">
-            No medicines match &quot;{search.trim()}&quot;
+            {quickFilterLabel ? `No medicines match the ${quickFilterLabel.toLowerCase()} filter.` : `No medicines match "${search.trim()}"`}
           </Typography>
         </Box>
       ) : (
@@ -255,7 +281,8 @@ const MedicineList = ({
                 </TableSortLabel>
               </TableCell>
               <TableCell>Description</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              {showArchiveDate && <TableCell>Archived on</TableCell>}
+              {!readOnly && <TableCell align="right">Actions</TableCell>}
             </TableRow>
           </TableHead>
           <TableBody>
@@ -335,7 +362,12 @@ const MedicineList = ({
                 }}>
                   {medicine.description || '-'}
                 </TableCell>
-                <TableCell align="right">
+                {showArchiveDate && (
+                  <TableCell>
+                    {medicine.archivedAt ? formatExpiryDate(medicine.archivedAt) : '-'}
+                  </TableCell>
+                )}
+                {!readOnly && <TableCell align="right">
                   <Tooltip title="Edit">
                     <IconButton 
                       onClick={() => handleEditClick(medicine)}
@@ -371,7 +403,7 @@ const MedicineList = ({
                       <DeleteIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                </TableCell>
+                </TableCell>}
               </TableRow>
             ))}
           </TableBody>

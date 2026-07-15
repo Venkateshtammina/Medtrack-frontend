@@ -1,7 +1,7 @@
 import React from 'react';
 import { Box, Typography, Paper, useTheme, alpha } from '@mui/material';
 
-const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
+const SummaryCard = ({ title, value, icon: Icon, color = 'primary', onClick }) => {
   const theme = useTheme();
   
   // Define color variants
@@ -43,17 +43,26 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
   return (
     <Paper 
       elevation={0}
+      onClick={onClick}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={(event) => {
+        if (onClick && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          onClick();
+        }
+      }}
       sx={{
         p: 3,
         height: '100%',
         borderRadius: 4,
         background: 'rgba(255, 255, 255, 0.98)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(255, 255, 255, 0.5)',
-        transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.12)',
+        border: '1px solid #E7ECF3',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        boxShadow: '0 2px 6px rgba(16, 24, 40, 0.03)',
         position: 'relative',
         overflow: 'hidden',
+        cursor: onClick ? 'pointer' : 'default',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -66,8 +75,8 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
           pointerEvents: 'none'
         },
         '&:hover': {
-          transform: 'translateY(-12px) scale(1.03)',
-          boxShadow: `0 20px 60px ${colors.shadow}`,
+          transform: 'translateY(-3px)',
+          boxShadow: `0 14px 28px ${colors.shadow}`,
           background: 'rgba(255, 255, 255, 1)',
           borderColor: colors.icon,
           '&::before': {
@@ -105,10 +114,10 @@ const SummaryCard = ({ title, value, icon: Icon, color = 'primary' }) => {
             variant="subtitle2" 
             color="textSecondary"
             sx={{ 
-              fontSize: '0.8rem',
+            fontSize: '0.72rem',
               fontWeight: 600,
               textTransform: 'uppercase',
-              letterSpacing: '1px',
+              letterSpacing: '0.08em',
               mb: 0.5,
               opacity: 0.8
             }}
